@@ -7,11 +7,12 @@ import Layout from "./components/Layout";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ProfileSetup from "./pages/ProfileSetup";
+import Profile from "./pages/Profile"; // Import the new Profile page
 import LoanAssessment from "./pages/LoanAssessment";
 import Dashboard from "./pages/Dashboard";
 import Transactions from "./pages/Transactions";
 import Auth from "./pages/Auth";
-import { FinanceProvider } from "./context/FinanceContext"; // Import FinanceProvider
+import { FinanceProvider } from "./context/FinanceContext";
 
 const queryClient = new QueryClient();
 
@@ -21,7 +22,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <FinanceProvider> {/* Wrap the entire app with FinanceProvider */}
+        <FinanceProvider>
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route
@@ -31,6 +32,7 @@ const App = () => (
                   <Routes>
                     <Route path="/" element={<Index />} />
                     <Route path="/profile-setup" element={<ProfileSetup />} />
+                    <Route path="/profile" element={<Profile />} /> {/* New Profile route */}
                     <Route path="/loan-assessment" element={<LoanAssessment />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/transactions" element={<Transactions />} />

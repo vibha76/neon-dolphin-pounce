@@ -4,9 +4,9 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { Button } from "@/components/ui/button";
-import { Home, User, Landmark, PiggyBank, Handshake, LogOut } from "lucide-react"; // Import LogOut icon
-import { useFinance } from "@/context/FinanceContext"; // Import useFinance
-import { ThemeToggle } from "./ThemeToggle"; // Import ThemeToggle
+import { Home, User, Landmark, PiggyBank, Handshake, LogOut } from "lucide-react";
+import { useFinance } from "@/context/FinanceContext";
+import { ThemeToggle } from "./ThemeToggle";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -36,7 +36,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </Link>
             </Button>
             <Button variant="ghost" asChild>
-              <Link to="/profile-setup">
+              <Link to="/profile"> {/* Updated link to new Profile page */}
                 <User className="mr-2 h-4 w-4" /> Profile
               </Link>
             </Button>
@@ -53,7 +53,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <Button variant="ghost" onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" /> Logout
             </Button>
-            <ThemeToggle /> {/* Add ThemeToggle here */}
+            <ThemeToggle />
           </nav>
         </div>
       </header>
