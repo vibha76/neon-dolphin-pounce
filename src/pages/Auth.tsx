@@ -9,15 +9,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { showSuccess, showError } from "@/utils/toast";
 import { useNavigate } from "react-router-dom";
 import { Chrome } from "lucide-react";
-import { useFinance } from "@/context/FinanceContext"; // Import useFinance
+import { useFinance } from "@/context/FinanceContext";
 
 const Auth: React.FC = () => {
-  const { loginUser, userProfile } = useFinance(); // Use loginUser from context
+  const { loginUser } = useFinance(); // No longer need userProfile directly from context here
   const [loginEmail, setLoginEmail] = useState("");
-  const [loginPassword, setLoginPassword] = useState(""); // Password is not used for simulation but kept for UI
+  const [loginPassword, setLoginPassword] = useState("");
   const [signupName, setSignupName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
-  const [signupPassword, setSignupPassword] = useState(""); // Password is not used for simulation but kept for UI
+  const [signupPassword, setSignupPassword] = useState("");
   const navigate = useNavigate();
 
   const handleLogin = (e: React.FormEvent) => {
@@ -27,14 +27,11 @@ const Auth: React.FC = () => {
       return;
     }
 
-    const success = loginUser(loginEmail);
-    if (success) {
+    const loggedInProfile = loginUser(loginEmail); // Get the profile directly
+    if (loggedInProfile) {
       showSuccess("Logged in successfully!");
-      // Check if profile is complete (name, mobile, balance are set)
-      // In a real app, you'd check for actual profile data. Here, we assume if userProfile exists,
-      // and has a mobile, it's "complete enough" to go to dashboard.
-      // Otherwise, redirect to profile setup.
-      if (userProfile && userProfile.mobile && userProfile.balance > 0) {
+      // Check if profile is complete using the returned profile
+      if (loggedInProfile.mobile && loggedInProfile.balance > 0) {
         navigate("/dashboard");
       } else {
         navigate("/profile-setup");
@@ -51,8 +48,8 @@ const Auth: React.FC = () => {
       return;
     }
 
-    const success = loginUser(signupEmail, signupName); // Use loginUser to create/login new user
-    if (success) {
+    const newProfile = loginUser(signupEmail, signupName); // Get the new profile directly
+    if (newProfile) {
       showSuccess("Account created successfully!");
       navigate("/profile-setup"); // Always navigate to profile setup for new users
     } else {
@@ -63,10 +60,10 @@ const Auth: React.FC = () => {
   const handleGoogleAuth = (type: "login" | "signup") => {
     // Simulate Google authentication by logging in with a generic Google email
     const googleEmail = "google_user@example.com";
-    const success = loginUser(googleEmail, "Google User");
-    if (success) {
+    const googleProfile = loginUser(googleEmail, "Google User"); // Get the profile directly
+    if (googleProfile) {
       showSuccess(`Successfully ${type === "login" ? "logged in" : "signed up"} with Google!`);
-      if (userProfile && userProfile.mobile && userProfile.balance > 0) {
+      if (googleProfile.mobile && googleProfile.balance > 0) {
         navigate("/dashboard");
       } else {
         navigate("/profile-setup");

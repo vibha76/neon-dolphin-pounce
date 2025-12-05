@@ -2,7 +2,7 @@
 
 import React, { createContext, useState, useContext, useEffect, ReactNode } from "react";
 import { showSuccess, showError } from "@/utils/toast";
-import { format, parseISO, startOfMonth, isSameMonth } from 'date-fns';
+import { format, parseISO, startOfMonth, isSameMonth, subMonths } from 'date-fns';
 
 interface Transaction {
   id: string;
@@ -31,15 +31,17 @@ interface FinanceContextType {
   transactions: Transaction[];
   userProfile: UserProfile | null;
   registeredUsers: UserProfile[];
-  balanceHistory: BalanceSnapshot[]; // Added balanceHistory
+  balanceHistory: BalanceSnapshot[];
   deposit: (amount: number, description: string) => void;
   withdraw: (amount: number, description: string) => void;
   transfer: (amount: number, recipientMobile: string, description: string) => void;
   updateUserProfile: (name: string, mobile: string, initialBalance: number) => void;
-  loginUser: (email: string, name?: string) => boolean;
+  loginUser: (email: string, name?: string) => UserProfile | null; // Updated return type
   getSpendingCategories: () => Record<string, number>;
-  getMonthlySpendingData: (months?: number) => { name: string; totalSpending: number }[]; // Added monthly spending data
-  getBalanceHistoryData: (months?: number) => { name: string; balance: number }[]; // Added balance history data
+  getMonthlySpendingData: (months?: number) => { name: string; totalSpending: number }[];
+  getBalanceHistoryData: (months?: number) => { name: string; balance: number }[];
+  getRecentTransactions: (limit?: number) => Transaction[];
+  getSavingsRate: (months?: number) => number;
   logout: () => void;
 }
 
@@ -212,16 +214,16 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     setRegisteredUsers(prev => prev.map(u => u.email === userProfile.email ? updatedProfile : u));
   };
 
-  const loginUser = (email: string, name: string = "User"): boolean => {
+  const loginUser = (email: string, name: string = "User"): UserProfile | null => {
     let foundUser = registeredUsers.find(user => user.email === email);
 
     if (foundUser) {
       setUserProfile(foundUser);
-      setBalance(foundUser.balance);
+      setBalance(parseFloat(localStorage.getItem(`finassist_balance_${foundUser.email}`) || "0"));
       setTransactions(JSON.parse(localStorage.getItem(`finassist_transactions_${foundUser.email}`) || "[]"));
       setBalanceHistory(JSON.parse(localStorage.getItem(`finassist_balance_history_${foundUser.email}`) || "[]"));
       localStorage.setItem("finassist_current_user_email", email);
-      return true;
+      return foundUser; // Return the found user profile
     } else {
       const newProfile: UserProfile = {
         email,
@@ -235,7 +237,7 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
       setTransactions([]);
       setBalanceHistory([]);
       localStorage.setItem("finassist_current_user_email", email);
-      return true;
+      return newProfile; // Return the new user profile
     }
   };
 
@@ -281,7 +283,7 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     transactions.filter(t => t.type === "withdraw" || t.type === "transfer_out").forEach(t => {
       const transactionDate = parseISO(t.date);
       // Only consider transactions within the last 'months'
-      if (transactionDate > new Date(today.setMonth(today.getMonth() - months))) {
+      if (transactionDate >= subMonths(today, months)) {
         const monthKey = format(startOfMonth(transactionDate), 'MMM yyyy');
         monthlySpending[monthKey] = (monthlySpending[monthKey] || 0) + t.amount;
       }
@@ -290,8 +292,7 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     // Generate data for the last 'months' even if no spending occurred
     const data = [];
     for (let i = months - 1; i >= 0; i--) {
-      const date = new Date();
-      date.setMonth(today.getMonth() - i);
+      const date = subMonths(today, i);
       const monthKey = format(startOfMonth(date), 'MMM yyyy');
       data.push({
         name: monthKey,
@@ -304,7 +305,7 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
   const getBalanceHistoryData = (months: number = 6) => {
     const data: { name: string; balance: number }[] = [];
     const today = new Date();
-    const sixMonthsAgo = new Date(today.setMonth(today.getMonth() - months));
+    const sixMonthsAgo = subMonths(today, months);
 
     // Filter snapshots to include only the last 'months'
     const relevantHistory = balanceHistory.filter(snapshot => parseISO(snapshot.date) >= sixMonthsAgo);
@@ -320,8 +321,7 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     // Ensure all last 'months' are represented
     for (let i = months - 1; i >= 0; i--) {
-      const date = new Date();
-      date.setMonth(today.getMonth() - i);
+      const date = subMonths(today, i);
       const monthKey = format(startOfMonth(date), 'MMM yyyy');
       const existingEntry = data.find(entry => entry.name === monthKey);
       if (!existingEntry) {
@@ -337,6 +337,42 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
       }
     }
     return data.sort((a, b) => parseISO(a.name).getTime() - parseISO(b.name).getTime());
+  };
+
+  const getRecentTransactions = (limit: number = 5) => {
+    return transactions.slice(0, limit);
+  };
+
+  const getSavingsRate = (months: number = 3) => {
+    const today = new Date();
+    const periodStart = subMonths(today, months);
+
+    let totalDeposits = 0;
+    let totalSpending = 0;
+
+    transactions.forEach(t => {
+      const transactionDate = parseISO(t.date);
+      if (transactionDate >= periodStart) {
+        if (t.type === "deposit" || t.type === "transfer_in") {
+          totalDeposits += t.amount;
+        } else if (t.type === "withdraw" || t.type === "transfer_out") {
+          totalSpending += t.amount;
+        }
+      }
+    });
+
+    if (totalDeposits + totalSpending === 0) {
+      return 0; // Avoid division by zero if no activity
+    }
+
+    // Simple savings rate: (Deposits - Spending) / Deposits
+    // If deposits are 0, but there's spending, it's -100%
+    if (totalDeposits === 0) {
+      return totalSpending > 0 ? -100 : 0;
+    }
+    
+    const rate = ((totalDeposits - totalSpending) / totalDeposits) * 100;
+    return parseFloat(rate.toFixed(2));
   };
 
 
@@ -401,6 +437,8 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
         getSpendingCategories,
         getMonthlySpendingData,
         getBalanceHistoryData,
+        getRecentTransactions,
+        getSavingsRate,
         logout,
       }}
     >
