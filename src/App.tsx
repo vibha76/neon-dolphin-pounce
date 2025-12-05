@@ -10,7 +10,8 @@ import ProfileSetup from "./pages/ProfileSetup";
 import LoanAssessment from "./pages/LoanAssessment";
 import Dashboard from "./pages/Dashboard";
 import Transactions from "./pages/Transactions";
-import Auth from "./pages/Auth"; // Import the new Auth component
+import Auth from "./pages/Auth";
+import { FinanceProvider } from "./context/FinanceContext"; // Import FinanceProvider
 
 const queryClient = new QueryClient();
 
@@ -20,25 +21,27 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/auth" element={<Auth />} /> {/* Auth page route */}
-          <Route
-            path="*"
-            element={
-              <Layout>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/profile-setup" element={<ProfileSetup />} />
-                  <Route path="/loan-assessment" element={<LoanAssessment />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/transactions" element={<Transactions />} />
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Layout>
-            }
-          />
-        </Routes>
+        <FinanceProvider> {/* Wrap the entire app with FinanceProvider */}
+          <Routes>
+            <Route path="/auth" element={<Auth />} />
+            <Route
+              path="*"
+              element={
+                <Layout>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/profile-setup" element={<ProfileSetup />} />
+                    <Route path="/loan-assessment" element={<LoanAssessment />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/transactions" element={<Transactions />} />
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Layout>
+              }
+            />
+          </Routes>
+        </FinanceProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

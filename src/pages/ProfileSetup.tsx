@@ -7,11 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { showSuccess, showError } from "@/utils/toast";
 import { useNavigate } from "react-router-dom";
+import { useFinance } from "@/context/FinanceContext"; // Import useFinance
 
 const ProfileSetup: React.FC = () => {
-  const [name, setName] = useState("");
-  const [mobile, setMobile] = useState("");
-  const [initialBalance, setInitialBalance] = useState("");
+  const { updateUserProfile, userProfile } = useFinance(); // Use useFinance hook
+  const [name, setName] = useState(userProfile?.name || "");
+  const [mobile, setMobile] = useState(userProfile?.mobile || "");
+  const [initialBalance, setInitialBalance] = useState(userProfile?.balance.toString() || "");
   const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -20,11 +22,15 @@ const ProfileSetup: React.FC = () => {
       showError("Please fill in all fields.");
       return;
     }
-    // In a real app, this data would be saved to a backend.
-    // For this demo, we'll just simulate success and navigate.
-    console.log("Profile Data:", { name, mobile, initialBalance });
+    const balanceNum = parseFloat(initialBalance);
+    if (isNaN(balanceNum) || balanceNum < 0) {
+      showError("Please enter a valid initial balance.");
+      return;
+    }
+
+    updateUserProfile(name, mobile, balanceNum); // Update profile via context
     showSuccess("Profile setup successfully!");
-    navigate("/dashboard"); // Navigate to a dashboard or home page after setup
+    navigate("/dashboard");
   };
 
   return (
