@@ -1,16 +1,20 @@
 "use client";
 
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"; // Confirmed CardDescription import
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useFinance } from "@/context/FinanceContext";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { Separator } from "@/components/ui/separator";
+import MonthlySpendingChart from "@/components/charts/MonthlySpendingChart"; // New import
+import BalanceHistoryChart from "@/components/charts/BalanceHistoryChart"; // New import
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A28DFF', '#FF6666', '#66CCFF', '#FFD700', '#ADFF2F', '#FF69B4'];
 
 const Dashboard: React.FC = () => {
-  const { balance, userProfile, getSpendingCategories } = useFinance();
+  const { balance, userProfile, getSpendingCategories, getMonthlySpendingData, getBalanceHistoryData } = useFinance();
   const spendingCategories = getSpendingCategories();
+  const monthlySpendingData = getMonthlySpendingData(6);
+  const balanceHistoryData = getBalanceHistoryData(6);
 
   const pieChartData = Object.entries(spendingCategories).map(([name, value]) => ({
     name,
@@ -19,7 +23,6 @@ const Dashboard: React.FC = () => {
 
   const totalSpending = pieChartData.reduce((sum, item) => sum + item.value, 0);
 
-  // Agentic AI-like guidance (simulated)
   const getSpendingGuidance = () => {
     if (totalSpending === 0) {
       return "Start tracking your expenses to get personalized spending insights!";
@@ -31,6 +34,15 @@ const Dashboard: React.FC = () => {
     let guidance = "";
     if (topCategory) {
       guidance += `Your highest spending category is **${topCategory[0]}** (₹${topCategory[1].toFixed(2)}). `;
+    }
+
+    const currentMonthSpending = monthlySpendingData[monthlySpendingData.length - 1]?.totalSpending || 0;
+    const previousMonthSpending = monthlySpendingData[monthlySpendingData.length - 2]?.totalSpending || 0;
+
+    if (currentMonthSpending > previousMonthSpending && previousMonthSpending > 0) {
+      guidance += `Your spending increased this month compared to last. Review your recent transactions. `;
+    } else if (currentMonthSpending < previousMonthSpending && previousMonthSpending > 0) {
+      guidance += `Great job! Your spending decreased this month. Keep up the good work! `;
     }
 
     if (balance < 10000) {
@@ -45,15 +57,25 @@ const Dashboard: React.FC = () => {
   };
 
   const getInvestmentGuidance = () => {
-    if (balance < 5000) {
-      return "Focus on building an emergency fund first. Small, consistent savings are key.";
-    } else if (balance < 20000) {
-      return "Consider low-risk options like Fixed Deposits (FDs) or Recurring Deposits (RDs) in Indian banks. They offer stable returns with minimal risk.";
-    } else if (balance < 100000) {
-      return "Explore diversified Mutual Funds (Equity, Debt, Hybrid) via SIPs (Systematic Investment Plans) for long-term growth. Look into Nifty 50 index funds for market exposure.";
-    } else {
-      return "With a substantial balance, you can consider direct equity investments in blue-chip Indian companies, real estate, or even explore alternative investments. Always consult a financial advisor for personalized strategies.";
+    const balanceTrend = balanceHistoryData.length > 1 ? balanceHistoryData[balanceHistoryData.length - 1].balance - balanceHistoryData[0].balance : 0;
+
+    let guidance = "";
+    if (balanceTrend > 0) {
+      guidance += "Your balance has been growing, indicating a good financial position for investments. ";
+    } else if (balanceTrend < 0) {
+      guidance += "Your balance has been declining. It might be wise to stabilize your finances before making new investments. ";
     }
+
+    if (balance < 5000) {
+      guidance += "Focus on building an emergency fund first. Small, consistent savings are key.";
+    } else if (balance < 20000) {
+      guidance += "Consider low-risk options like Fixed Deposits (FDs) or Recurring Deposits (RDs) in Indian banks. They offer stable returns with minimal risk.";
+    } else if (balance < 100000) {
+      guidance += "Explore diversified Mutual Funds (Equity, Debt, Hybrid) via SIPs (Systematic Investment Plans) for long-term growth. Look into Nifty 50 index funds for market exposure.";
+    } else {
+      guidance += "With a substantial balance, you can consider direct equity investments in blue-chip Indian companies, real estate, or even explore alternative investments. Always consult a financial advisor for personalized strategies.";
+    }
+    return guidance;
   };
 
   const getLoanGuidance = () => {
@@ -93,9 +115,9 @@ const Dashboard: React.FC = () => {
         </CardContent>
       </Card>
 
-      <Card className="md:col-span-2">
+      <Card className="md:col-span-1"> {/* Adjusted column span */}
         <CardHeader>
-          <CardTitle>Spending Patterns</CardTitle>
+          <CardTitle>Spending Categories</CardTitle>
           <CardDescription>Where your money goes.</CardDescription>
         </CardHeader>
         <CardContent>
@@ -124,19 +146,31 @@ const Dashboard: React.FC = () => {
           ) : (
             <p className="text-muted-foreground">No spending data to display yet. Make some withdrawals or transfers!</p>
           )}
-          <Separator className="my-4" />
-          <h3 className="font-semibold text-md mb-2">Spending Insights:</h3>
-          <p className="text-sm text-muted-foreground">{getSpendingGuidance()}</p>
         </CardContent>
       </Card>
 
-      <Card>
+      <div className="md:col-span-2 grid gap-6"> {/* New container for the two new charts */}
+        <MonthlySpendingChart />
+        <BalanceHistoryChart />
+      </div>
+
+      <Card className="lg:col-span-3">
+        <CardHeader>
+          <CardTitle>Spending Insights</CardTitle>
+          <CardDescription>Personalized analysis of your spending habits.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground" dangerouslySetInnerHTML={{ __html: getSpendingGuidance() }}></p>
+        </CardContent>
+      </Card>
+
+      <Card className="lg:col-span-3">
         <CardHeader>
           <CardTitle>Investment Guidance</CardTitle>
           <CardDescription>Smart ways to grow your money.</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">{getInvestmentGuidance()}</p>
+          <p className="text-sm text-muted-foreground" dangerouslySetInnerHTML={{ __html: getInvestmentGuidance() }}></p>
         </CardContent>
       </Card>
 
@@ -146,7 +180,7 @@ const Dashboard: React.FC = () => {
           <CardDescription>Understand how much loan to take and for what term.</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">{getLoanGuidance()}</p>
+          <p className="text-sm text-muted-foreground" dangerouslySetInnerHTML={{ __html: getLoanGuidance() }}></p>
         </CardContent>
       </Card>
     </div>

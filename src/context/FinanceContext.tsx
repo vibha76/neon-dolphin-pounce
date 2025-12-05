@@ -2,6 +2,7 @@
 
 import React, { createContext, useState, useContext, useEffect, ReactNode } from "react";
 import { showSuccess, showError } from "@/utils/toast";
+import { format, parseISO, startOfMonth, isSameMonth } from 'date-fns';
 
 interface Transaction {
   id: string;
@@ -17,7 +18,12 @@ interface UserProfile {
   mobile: string;
   name: string;
   balance: number;
-  email: string; // Add email to UserProfile
+  email: string;
+}
+
+interface BalanceSnapshot {
+  date: string;
+  balance: number;
 }
 
 interface FinanceContextType {
@@ -25,12 +31,15 @@ interface FinanceContextType {
   transactions: Transaction[];
   userProfile: UserProfile | null;
   registeredUsers: UserProfile[];
+  balanceHistory: BalanceSnapshot[]; // Added balanceHistory
   deposit: (amount: number, description: string) => void;
   withdraw: (amount: number, description: string) => void;
   transfer: (amount: number, recipientMobile: string, description: string) => void;
   updateUserProfile: (name: string, mobile: string, initialBalance: number) => void;
-  loginUser: (email: string, name?: string) => boolean; // Add loginUser function
+  loginUser: (email: string, name?: string) => boolean;
   getSpendingCategories: () => Record<string, number>;
+  getMonthlySpendingData: (months?: number) => { name: string; totalSpending: number }[]; // Added monthly spending data
+  getBalanceHistoryData: (months?: number) => { name: string; balance: number }[]; // Added balance history data
   logout: () => void;
 }
 
@@ -53,6 +62,10 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     const savedUsers = localStorage.getItem("finassist_registered_users");
     return savedUsers ? JSON.parse(savedUsers) : [];
   });
+  const [balanceHistory, setBalanceHistory] = useState<BalanceSnapshot[]>(() => {
+    const savedHistory = localStorage.getItem("finassist_balance_history");
+    return savedHistory ? JSON.parse(savedHistory) : [];
+  });
 
   useEffect(() => {
     localStorage.setItem("finassist_balance", balance.toString());
@@ -64,7 +77,6 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   useEffect(() => {
     localStorage.setItem("finassist_user_profile", JSON.stringify(userProfile));
-    // Ensure the current user is in the registered users list if profile exists
     if (userProfile && !registeredUsers.some(u => u.mobile === userProfile.mobile)) {
       setRegisteredUsers(prev => [...prev, userProfile]);
     }
@@ -74,13 +86,40 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     localStorage.setItem("finassist_registered_users", JSON.stringify(registeredUsers));
   }, [registeredUsers]);
 
+  useEffect(() => {
+    localStorage.setItem("finassist_balance_history", JSON.stringify(balanceHistory));
+  }, [balanceHistory]);
+
+  const recordBalanceSnapshot = (currentBalance: number) => {
+    const today = new Date();
+    const formattedDate = format(today, 'yyyy-MM-dd');
+    setBalanceHistory(prev => {
+      // Only add a new snapshot if the last one was from a different day or if it's the first snapshot
+      const lastSnapshot = prev[prev.length - 1];
+      if (!lastSnapshot || format(parseISO(lastSnapshot.date), 'yyyy-MM-dd') !== formattedDate) {
+        return [...prev, { date: formattedDate, balance: currentBalance }];
+      }
+      // Update the last snapshot if it's from today
+      return prev.map((snapshot, index) => 
+        index === prev.length - 1 ? { ...snapshot, balance: currentBalance } : snapshot
+      );
+    });
+  };
+
+  // Record initial balance snapshot when userProfile or balance changes
+  useEffect(() => {
+    if (userProfile) {
+      recordBalanceSnapshot(balance);
+    }
+  }, [balance, userProfile]);
+
 
   const addTransaction = (type: Transaction["type"], amount: number, description: string, recipientMobile?: string, senderMobile?: string) => {
     const newTransaction: Transaction = {
       id: Date.now().toString(),
       type,
       amount,
-      date: new Date().toLocaleString(),
+      date: new Date().toISOString(), // Store as ISO string for easier parsing
       description,
       recipientMobile,
       senderMobile,
@@ -93,7 +132,11 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
       showError("Deposit amount must be positive.");
       return;
     }
-    setBalance((prev) => prev + amount);
+    setBalance((prev) => {
+      const newBalance = prev + amount;
+      recordBalanceSnapshot(newBalance);
+      return newBalance;
+    });
     addTransaction("deposit", amount, description);
     showSuccess(`Successfully deposited ₹${amount.toFixed(2)}.`);
   };
@@ -107,7 +150,11 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
       showError("Insufficient balance.");
       return;
     }
-    setBalance((prev) => prev - amount);
+    setBalance((prev) => {
+      const newBalance = prev - amount;
+      recordBalanceSnapshot(newBalance);
+      return newBalance;
+    });
     addTransaction("withdraw", amount, description);
     showSuccess(`Successfully withdrew ₹${amount.toFixed(2)}.`);
   };
@@ -137,18 +184,19 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
       return;
     }
 
-    // Simulate transfer for sender
-    setBalance((prev) => prev - amount);
+    setBalance((prev) => {
+      const newBalance = prev - amount;
+      recordBalanceSnapshot(newBalance);
+      return newBalance;
+    });
     addTransaction("transfer_out", amount, description, recipientMobile, userProfile.mobile);
     showSuccess(`Transferred ₹${amount.toFixed(2)} to ${recipient.name} (${recipientMobile}).`);
 
-    // Simulate transfer for recipient (update their balance in registeredUsers)
     setRegisteredUsers(prevUsers => prevUsers.map(user =>
       user.mobile === recipientMobile
         ? { ...user, balance: user.balance + amount }
         : user
     ));
-    // Add a simulated 'transfer_in' transaction for the recipient (not visible to current user, but for data consistency)
     console.log(`Simulated transfer_in for ${recipient.name}: ₹${amount.toFixed(2)} from ${userProfile.name}`);
   };
 
@@ -159,8 +207,8 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
     const updatedProfile: UserProfile = { ...userProfile, name, mobile, balance: initialBalance };
     setUserProfile(updatedProfile);
-    setBalance(initialBalance); // Set initial balance from profile setup
-    // Update the user in the registeredUsers list
+    setBalance(initialBalance);
+    recordBalanceSnapshot(initialBalance); // Record balance when profile is updated
     setRegisteredUsers(prev => prev.map(u => u.email === userProfile.email ? updatedProfile : u));
   };
 
@@ -168,24 +216,24 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     let foundUser = registeredUsers.find(user => user.email === email);
 
     if (foundUser) {
-      // Simulate successful login for existing user
       setUserProfile(foundUser);
       setBalance(foundUser.balance);
       setTransactions(JSON.parse(localStorage.getItem(`finassist_transactions_${foundUser.email}`) || "[]"));
+      setBalanceHistory(JSON.parse(localStorage.getItem(`finassist_balance_history_${foundUser.email}`) || "[]"));
       localStorage.setItem("finassist_current_user_email", email);
       return true;
     } else {
-      // Simulate new user registration
       const newProfile: UserProfile = {
         email,
         name,
-        mobile: "", // Will be set in ProfileSetup
-        balance: 0, // Will be set in ProfileSetup
+        mobile: "",
+        balance: 0,
       };
       setRegisteredUsers(prev => [...prev, newProfile]);
       setUserProfile(newProfile);
       setBalance(0);
       setTransactions([]);
+      setBalanceHistory([]);
       localStorage.setItem("finassist_current_user_email", email);
       return true;
     }
@@ -226,15 +274,90 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     return categories;
   };
 
+  const getMonthlySpendingData = (months: number = 6) => {
+    const monthlySpending: Record<string, number> = {};
+    const today = new Date();
+
+    transactions.filter(t => t.type === "withdraw" || t.type === "transfer_out").forEach(t => {
+      const transactionDate = parseISO(t.date);
+      // Only consider transactions within the last 'months'
+      if (transactionDate > new Date(today.setMonth(today.getMonth() - months))) {
+        const monthKey = format(startOfMonth(transactionDate), 'MMM yyyy');
+        monthlySpending[monthKey] = (monthlySpending[monthKey] || 0) + t.amount;
+      }
+    });
+
+    // Generate data for the last 'months' even if no spending occurred
+    const data = [];
+    for (let i = months - 1; i >= 0; i--) {
+      const date = new Date();
+      date.setMonth(today.getMonth() - i);
+      const monthKey = format(startOfMonth(date), 'MMM yyyy');
+      data.push({
+        name: monthKey,
+        totalSpending: monthlySpending[monthKey] || 0,
+      });
+    }
+    return data;
+  };
+
+  const getBalanceHistoryData = (months: number = 6) => {
+    const data: { name: string; balance: number }[] = [];
+    const today = new Date();
+    const sixMonthsAgo = new Date(today.setMonth(today.getMonth() - months));
+
+    // Filter snapshots to include only the last 'months'
+    const relevantHistory = balanceHistory.filter(snapshot => parseISO(snapshot.date) >= sixMonthsAgo);
+
+    // Aggregate to show one balance per month (e.g., end-of-month balance)
+    const monthlyBalances: Record<string, number> = {};
+    relevantHistory.forEach(snapshot => {
+      const snapshotDate = parseISO(snapshot.date);
+      const monthKey = format(startOfMonth(snapshotDate), 'MMM yyyy');
+      // Keep the latest balance for each month
+      monthlyBalances[monthKey] = snapshot.balance;
+    });
+
+    // Ensure all last 'months' are represented
+    for (let i = months - 1; i >= 0; i--) {
+      const date = new Date();
+      date.setMonth(today.getMonth() - i);
+      const monthKey = format(startOfMonth(date), 'MMM yyyy');
+      const existingEntry = data.find(entry => entry.name === monthKey);
+      if (!existingEntry) {
+        // Find the latest balance for this month from the history
+        const balanceForMonth = monthlyBalances[monthKey];
+        if (balanceForMonth !== undefined) {
+          data.push({ name: monthKey, balance: balanceForMonth });
+        } else {
+          // If no snapshot for the month, use the last known balance or 0
+          const lastKnownBalance = data.length > 0 ? data[data.length - 1].balance : 0;
+          data.push({ name: monthKey, balance: lastKnownBalance });
+        }
+      }
+    }
+    return data.sort((a, b) => parseISO(a.name).getTime() - parseISO(b.name).getTime());
+  };
+
+
   const logout = () => {
+    if (userProfile?.email) {
+      // Save current user's data before logging out
+      localStorage.setItem(`finassist_balance_${userProfile.email}`, balance.toString());
+      localStorage.setItem(`finassist_transactions_${userProfile.email}`, JSON.stringify(transactions));
+      localStorage.setItem(`finassist_balance_history_${userProfile.email}`, JSON.stringify(balanceHistory));
+    }
+
     localStorage.removeItem("finassist_balance");
     localStorage.removeItem("finassist_transactions");
     localStorage.removeItem("finassist_user_profile");
-    localStorage.removeItem("finassist_current_user_email"); // Clear current user email
-    // Note: We are not clearing `finassist_registered_users` to simulate multiple users
+    localStorage.removeItem("finassist_balance_history");
+    localStorage.removeItem("finassist_current_user_email");
+    
     setBalance(0);
     setTransactions([]);
     setUserProfile(null);
+    setBalanceHistory([]);
     showSuccess("Logged out successfully!");
   };
 
@@ -245,18 +368,21 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
       const foundUser = registeredUsers.find(user => user.email === currentUserEmail);
       if (foundUser) {
         setUserProfile(foundUser);
-        setBalance(foundUser.balance);
+        setBalance(parseFloat(localStorage.getItem(`finassist_balance_${foundUser.email}`) || "0"));
         setTransactions(JSON.parse(localStorage.getItem(`finassist_transactions_${foundUser.email}`) || "[]"));
+        setBalanceHistory(JSON.parse(localStorage.getItem(`finassist_balance_history_${foundUser.email}`) || "[]"));
       }
     }
-  }, []); // Run only once on mount
+  }, []);
 
-  // Save transactions specific to the current user
+  // Save transactions and balance history specific to the current user
   useEffect(() => {
     if (userProfile?.email) {
       localStorage.setItem(`finassist_transactions_${userProfile.email}`, JSON.stringify(transactions));
+      localStorage.setItem(`finassist_balance_history_${userProfile.email}`, JSON.stringify(balanceHistory));
+      localStorage.setItem(`finassist_balance_${userProfile.email}`, balance.toString());
     }
-  }, [transactions, userProfile?.email]);
+  }, [transactions, balanceHistory, balance, userProfile?.email]);
 
 
   return (
@@ -266,12 +392,15 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
         transactions,
         userProfile,
         registeredUsers,
+        balanceHistory,
         deposit,
         withdraw,
         transfer,
         updateUserProfile,
         loginUser,
         getSpendingCategories,
+        getMonthlySpendingData,
+        getBalanceHistoryData,
         logout,
       }}
     >
