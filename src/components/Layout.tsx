@@ -6,6 +6,7 @@ import { MadeWithDyad } from "@/components/made-with-dyad";
 import { Button } from "@/components/ui/button";
 import { Home, User, Landmark, PiggyBank, Handshake, LogOut } from "lucide-react"; // Import LogOut icon
 import { useFinance } from "@/context/FinanceContext"; // Import useFinance
+import { ThemeToggle } from "./ThemeToggle"; // Import ThemeToggle
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -49,9 +50,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <Handshake className="mr-2 h-4 w-4" /> Loan
               </Link>
             </Button>
-            <Button variant="ghost" onClick={handleLogout}> {/* Logout Button */}
+            <Button variant="ghost" onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" /> Logout
             </Button>
+            <ThemeToggle /> {/* Add ThemeToggle here */}
           </nav>
         </div>
       </header>
