@@ -1,14 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { showSuccess, showError } from "@/utils/toast";
+import { useFinance } from "@/context/FinanceContext"; // Import useFinance
 
 const LoanAssessment: React.FC = () => {
+  const { userProfile } = useFinance(); // Use useFinance hook to get user profile
+
   const [gender, setGender] = useState<string>("");
   const [dependents, setDependents] = useState<string>("");
   const [age, setAge] = useState<string>("");
@@ -25,6 +28,17 @@ const LoanAssessment: React.FC = () => {
   const [overdueInterest, setOverdueInterest] = useState<string>("");
   const [assessmentResult, setAssessmentResult] = useState<string | null>(null);
   const [fraudDetectionResult, setFraudDetectionResult] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (userProfile) {
+      // Pre-fill age and net salary from user profile if available
+      // For age, we'll assume a default or ask the user to input it in profile setup if needed.
+      // For now, we'll leave age as a manual input or set a placeholder.
+      // For net salary, we'll use the current balance as a proxy for demonstration.
+      setNetSalary(userProfile.balance.toString());
+      // If you had an 'age' field in userProfile, you could setAge(userProfile.age.toString());
+    }
+  }, [userProfile]);
 
   const handleAssessLoan = (e: React.FormEvent) => {
     e.preventDefault();
