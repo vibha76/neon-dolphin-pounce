@@ -4,7 +4,7 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { Button } from "@/components/ui/button";
-import { Home, User, Landmark, PiggyBank, Handshake, LogOut } from "lucide-react";
+import { Home, User, Landmark, PiggyBank, Handshake, LogOut, BarChart2 } from "lucide-react"; // Added BarChart2 icon
 import { useFinance } from "@/context/FinanceContext";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -31,12 +31,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </Link>
           <nav className="flex items-center space-x-4">
             <Button variant="ghost" asChild>
-              <Link to="/">
-                <Home className="mr-2 h-4 w-4" /> Home
+              <Link to="/dashboard">
+                <Home className="mr-2 h-4 w-4" /> Dashboard
               </Link>
             </Button>
             <Button variant="ghost" asChild>
-              <Link to="/profile"> {/* Updated link to new Profile page */}
+              <Link to="/analytics-investments"> {/* New navigation link */}
+                <BarChart2 className="mr-2 h-4 w-4" /> Analytics & Investments
+              </Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link to="/profile">
                 <User className="mr-2 h-4 w-4" /> Profile
               </Link>
             </Button>

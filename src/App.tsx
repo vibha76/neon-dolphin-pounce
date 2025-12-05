@@ -12,8 +12,9 @@ import LoanAssessment from "./pages/LoanAssessment";
 import Dashboard from "./pages/Dashboard";
 import Transactions from "./pages/Transactions";
 import Auth from "./pages/Auth";
+import AnalyticsAndInvestments from "./pages/AnalyticsAndInvestments"; // New import
 import { FinanceProvider } from "./context/FinanceContext";
-import ProtectedRoute from "./components/ProtectedRoute"; // Import ProtectedRoute
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,7 @@ const App = () => (
                       <Route path="/loan-assessment" element={<LoanAssessment />} />
                       <Route path="/dashboard" element={<Dashboard />} />
                       <Route path="/transactions" element={<Transactions />} />
+                      <Route path="/analytics-investments" element={<AnalyticsAndInvestments />} /> {/* New Route */}
                       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                       <Route path="*" element={<NotFound />} />
                     </Routes>
