@@ -29,6 +29,7 @@ interface FinanceContextType {
   transfer: (amount: number, recipientMobile: string, description: string) => void;
   updateUserProfile: (name: string, mobile: string, initialBalance: number) => void;
   getSpendingCategories: () => Record<string, number>;
+  logout: () => void; // Add logout function
 }
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
@@ -198,6 +199,18 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     return categories;
   };
 
+  const logout = () => {
+    localStorage.removeItem("finassist_balance");
+    localStorage.removeItem("finassist_transactions");
+    localStorage.removeItem("finassist_user_profile");
+    localStorage.removeItem("finassist_registered_users"); // Clear all stored data
+    setBalance(0);
+    setTransactions([]);
+    setUserProfile(null);
+    setRegisteredUsers([]);
+    showSuccess("Logged out successfully!");
+  };
+
 
   return (
     <FinanceContext.Provider
@@ -211,6 +224,7 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
         transfer,
         updateUserProfile,
         getSpendingCategories,
+        logout,
       }}
     >
       {children}

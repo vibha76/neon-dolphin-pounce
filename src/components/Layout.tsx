@@ -1,16 +1,25 @@
 "use client";
 
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { Button } from "@/components/ui/button";
-import { Home, User, Landmark, PiggyBank, Handshake } from "lucide-react";
+import { Home, User, Landmark, PiggyBank, Handshake, LogOut } from "lucide-react"; // Import LogOut icon
+import { useFinance } from "@/context/FinanceContext"; // Import useFinance
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const { logout } = useFinance();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/auth");
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <header className="sticky top-0 z-40 w-full border-b bg-background">
@@ -39,6 +48,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <Link to="/loan-assessment">
                 <Handshake className="mr-2 h-4 w-4" /> Loan
               </Link>
+            </Button>
+            <Button variant="ghost" onClick={handleLogout}> {/* Logout Button */}
+              <LogOut className="mr-2 h-4 w-4" /> Logout
             </Button>
           </nav>
         </div>
