@@ -190,6 +190,7 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
       return;
     }
 
+    // Deduct from sender's balance
     setBalance((prev) => {
       const newBalance = prev - amount;
       recordBalanceSnapshot(newBalance);
@@ -198,12 +199,44 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     addTransaction("transfer_out", amount, description, recipientMobile, userProfile.mobile);
     showSuccess(`Transferred ₹${amount.toFixed(2)} to ${recipient.name} (${recipientMobile}).`);
 
+    // Update recipient's balance in their specific localStorage key
+    const currentRecipientBalance = parseFloat(localStorage.getItem(`finassist_balance_${recipient.email}`) || "0");
+    const updatedRecipientBalance = currentRecipientBalance + amount;
+    localStorage.setItem(`finassist_balance_${recipient.email}`, updatedRecipientBalance.toString());
+
+    // Also update the recipient's profile within the registeredUsers array for consistency
     setRegisteredUsers(prevUsers => prevUsers.map(user =>
       user.mobile === recipientMobile
-        ? { ...user, balance: user.balance + amount }
+        ? { ...user, balance: updatedRecipientBalance }
         : user
     ));
-    console.log(`Simulated transfer_in for ${recipient.name}: ₹${amount.toFixed(2)} from ${userProfile.name}`);
+
+    // Add a 'transfer_in' transaction for the recipient
+    const recipientTransactions = JSON.parse(localStorage.getItem(`finassist_transactions_${recipient.email}`) || "[]");
+    const newRecipientTransaction: Transaction = {
+      id: Date.now().toString() + "_in", // Unique ID for recipient's transaction
+      type: "transfer_in",
+      amount,
+      date: new Date().toISOString(),
+      description: `Transfer from ${userProfile.name} (${userProfile.mobile}) - ${description}`,
+      senderMobile: userProfile.mobile,
+    };
+    localStorage.setItem(`finassist_transactions_${recipient.email}`, JSON.stringify([newRecipientTransaction, ...recipientTransactions]));
+
+    // Update recipient's balance history
+    const recipientBalanceHistory = JSON.parse(localStorage.getItem(`finassist_balance_history_${recipient.email}`) || "[]");
+    const today = new Date();
+    const formattedDate = format(today, 'yyyy-MM-dd');
+    const lastRecipientSnapshot = recipientBalanceHistory[recipientBalanceHistory.length - 1];
+    let updatedRecipientHistory;
+    if (!lastRecipientSnapshot || format(parseISO(lastRecipientSnapshot.date), 'yyyy-MM-dd') !== formattedDate) {
+      updatedRecipientHistory = [...recipientBalanceHistory, { date: formattedDate, balance: updatedRecipientBalance }];
+    } else {
+      updatedRecipientHistory = recipientBalanceHistory.map((snapshot: BalanceSnapshot, index: number) =>
+        index === recipientBalanceHistory.length - 1 ? { ...snapshot, balance: updatedRecipientBalance } : snapshot
+      );
+    }
+    localStorage.setItem(`finassist_balance_history_${recipient.email}`, JSON.stringify(updatedRecipientHistory));
   };
 
   const updateUserProfile = (name: string, mobile: string, initialBalance: number) => {
