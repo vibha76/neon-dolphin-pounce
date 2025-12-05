@@ -17,6 +17,7 @@ interface UserProfile {
   mobile: string;
   name: string;
   balance: number;
+  email: string; // Add email to UserProfile
 }
 
 interface FinanceContextType {
@@ -28,8 +29,9 @@ interface FinanceContextType {
   withdraw: (amount: number, description: string) => void;
   transfer: (amount: number, recipientMobile: string, description: string) => void;
   updateUserProfile: (name: string, mobile: string, initialBalance: number) => void;
+  loginUser: (email: string, name?: string) => boolean; // Add loginUser function
   getSpendingCategories: () => Record<string, number>;
-  logout: () => void; // Add logout function
+  logout: () => void;
 }
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
@@ -62,6 +64,7 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   useEffect(() => {
     localStorage.setItem("finassist_user_profile", JSON.stringify(userProfile));
+    // Ensure the current user is in the registered users list if profile exists
     if (userProfile && !registeredUsers.some(u => u.mobile === userProfile.mobile)) {
       setRegisteredUsers(prev => [...prev, userProfile]);
     }
@@ -146,27 +149,51 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
         : user
     ));
     // Add a simulated 'transfer_in' transaction for the recipient (not visible to current user, but for data consistency)
-    // In a real app, this would be handled by the recipient's account.
     console.log(`Simulated transfer_in for ${recipient.name}: ₹${amount.toFixed(2)} from ${userProfile.name}`);
   };
 
   const updateUserProfile = (name: string, mobile: string, initialBalance: number) => {
-    const newProfile: UserProfile = { name, mobile, balance: initialBalance };
-    setUserProfile(newProfile);
+    if (!userProfile) {
+      showError("No user logged in to update profile.");
+      return;
+    }
+    const updatedProfile: UserProfile = { ...userProfile, name, mobile, balance: initialBalance };
+    setUserProfile(updatedProfile);
     setBalance(initialBalance); // Set initial balance from profile setup
-    // Ensure the current user is in the registered users list
-    setRegisteredUsers(prev => {
-      if (!prev.some(u => u.mobile === mobile)) {
-        return [...prev, newProfile];
-      }
-      return prev.map(u => u.mobile === mobile ? { ...u, name, balance: initialBalance } : u);
-    });
+    // Update the user in the registeredUsers list
+    setRegisteredUsers(prev => prev.map(u => u.email === userProfile.email ? updatedProfile : u));
+  };
+
+  const loginUser = (email: string, name: string = "User"): boolean => {
+    let foundUser = registeredUsers.find(user => user.email === email);
+
+    if (foundUser) {
+      // Simulate successful login for existing user
+      setUserProfile(foundUser);
+      setBalance(foundUser.balance);
+      setTransactions(JSON.parse(localStorage.getItem(`finassist_transactions_${foundUser.email}`) || "[]"));
+      localStorage.setItem("finassist_current_user_email", email);
+      return true;
+    } else {
+      // Simulate new user registration
+      const newProfile: UserProfile = {
+        email,
+        name,
+        mobile: "", // Will be set in ProfileSetup
+        balance: 0, // Will be set in ProfileSetup
+      };
+      setRegisteredUsers(prev => [...prev, newProfile]);
+      setUserProfile(newProfile);
+      setBalance(0);
+      setTransactions([]);
+      localStorage.setItem("finassist_current_user_email", email);
+      return true;
+    }
   };
 
   const getSpendingCategories = () => {
     const categories: Record<string, number> = {};
     transactions.filter(t => t.type === "withdraw" || t.type === "transfer_out").forEach(t => {
-      // Simple keyword-based categorization for demo purposes
       const desc = t.description.toLowerCase();
       let category = "Other";
 
@@ -203,13 +230,33 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     localStorage.removeItem("finassist_balance");
     localStorage.removeItem("finassist_transactions");
     localStorage.removeItem("finassist_user_profile");
-    localStorage.removeItem("finassist_registered_users"); // Clear all stored data
+    localStorage.removeItem("finassist_current_user_email"); // Clear current user email
+    // Note: We are not clearing `finassist_registered_users` to simulate multiple users
     setBalance(0);
     setTransactions([]);
     setUserProfile(null);
-    setRegisteredUsers([]);
     showSuccess("Logged out successfully!");
   };
+
+  // Load user profile and transactions on initial load based on current_user_email
+  useEffect(() => {
+    const currentUserEmail = localStorage.getItem("finassist_current_user_email");
+    if (currentUserEmail) {
+      const foundUser = registeredUsers.find(user => user.email === currentUserEmail);
+      if (foundUser) {
+        setUserProfile(foundUser);
+        setBalance(foundUser.balance);
+        setTransactions(JSON.parse(localStorage.getItem(`finassist_transactions_${foundUser.email}`) || "[]"));
+      }
+    }
+  }, []); // Run only once on mount
+
+  // Save transactions specific to the current user
+  useEffect(() => {
+    if (userProfile?.email) {
+      localStorage.setItem(`finassist_transactions_${userProfile.email}`, JSON.stringify(transactions));
+    }
+  }, [transactions, userProfile?.email]);
 
 
   return (
@@ -223,6 +270,7 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
         withdraw,
         transfer,
         updateUserProfile,
+        loginUser,
         getSpendingCategories,
         logout,
       }}

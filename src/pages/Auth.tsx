@@ -9,13 +9,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { showSuccess, showError } from "@/utils/toast";
 import { useNavigate } from "react-router-dom";
 import { Chrome } from "lucide-react";
+import { useFinance } from "@/context/FinanceContext"; // Import useFinance
 
 const Auth: React.FC = () => {
+  const { loginUser, userProfile } = useFinance(); // Use loginUser from context
   const [loginEmail, setLoginEmail] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
+  const [loginPassword, setLoginPassword] = useState(""); // Password is not used for simulation but kept for UI
   const [signupName, setSignupName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
-  const [signupPassword, setSignupPassword] = useState("");
+  const [signupPassword, setSignupPassword] = useState(""); // Password is not used for simulation but kept for UI
   const navigate = useNavigate();
 
   const handleLogin = (e: React.FormEvent) => {
@@ -24,10 +26,22 @@ const Auth: React.FC = () => {
       showError("Please enter both email and password.");
       return;
     }
-    // Simulate login success
-    console.log("Simulated Login:", { email: loginEmail, password: loginPassword });
-    showSuccess("Logged in successfully!");
-    navigate("/dashboard"); // Navigate to dashboard after simulated login
+
+    const success = loginUser(loginEmail);
+    if (success) {
+      showSuccess("Logged in successfully!");
+      // Check if profile is complete (name, mobile, balance are set)
+      // In a real app, you'd check for actual profile data. Here, we assume if userProfile exists,
+      // and has a mobile, it's "complete enough" to go to dashboard.
+      // Otherwise, redirect to profile setup.
+      if (userProfile && userProfile.mobile && userProfile.balance > 0) {
+        navigate("/dashboard");
+      } else {
+        navigate("/profile-setup");
+      }
+    } else {
+      showError("Login failed. Please check your credentials.");
+    }
   };
 
   const handleSignUp = (e: React.FormEvent) => {
@@ -36,20 +50,29 @@ const Auth: React.FC = () => {
       showError("Please fill in all sign-up fields.");
       return;
     }
-    // Simulate sign-up success
-    console.log("Simulated Sign Up:", { name: signupName, email: signupEmail, password: signupPassword });
-    showSuccess("Account created successfully!");
-    navigate("/profile-setup"); // Navigate to profile setup after simulated sign-up
+
+    const success = loginUser(signupEmail, signupName); // Use loginUser to create/login new user
+    if (success) {
+      showSuccess("Account created successfully!");
+      navigate("/profile-setup"); // Always navigate to profile setup for new users
+    } else {
+      showError("Sign up failed. Please try again.");
+    }
   };
 
   const handleGoogleAuth = (type: "login" | "signup") => {
-    // Simulate Google authentication
-    console.log(`Simulated Google ${type}.`);
-    showSuccess(`Successfully ${type === "login" ? "logged in" : "signed up"} with Google!`);
-    if (type === "signup") {
-      navigate("/profile-setup");
+    // Simulate Google authentication by logging in with a generic Google email
+    const googleEmail = "google_user@example.com";
+    const success = loginUser(googleEmail, "Google User");
+    if (success) {
+      showSuccess(`Successfully ${type === "login" ? "logged in" : "signed up"} with Google!`);
+      if (userProfile && userProfile.mobile && userProfile.balance > 0) {
+        navigate("/dashboard");
+      } else {
+        navigate("/profile-setup");
+      }
     } else {
-      navigate("/dashboard");
+      showError("Google authentication failed.");
     }
   };
 
