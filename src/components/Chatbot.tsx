@@ -134,94 +134,83 @@ const Chatbot: React.FC = () => {
 
     // --- Investments & Analytics ---
     else if (lowerCaseMessage.includes("investments") || lowerCaseMessage.includes("analytics") || lowerCaseMessage.includes("financial insights") || lowerCaseMessage.includes("grow my money") || lowerCaseMessage.includes("investment options") || lowerCaseMessage.includes("where to invest")) {
-      let response = `For detailed financial insights, monthly trends, recommended investment allocations, and top investment opportunities, check out the Analytics & Investments page.`;
-      
-      if (balance > 10000) {
-        response += ` With your current balance of ₹${balance.toFixed(2)}, you have a good foundation to start or grow your investments. Here's a general guide on different investment types:\n\n`;
-        response += `1. **Emergency Fund**: Before investing, ensure you have 3-6 months of living expenses saved. Your current balance is ₹${balance.toFixed(2)}. (Risk: Very Low, Returns: 5-7% p.a., Time: Short-term, Liquid)\n`;
-        response += `2. **Equity Mutual Funds (SIPs)**: Good for long-term wealth creation. (Risk: Moderate, Returns: 10-14% p.a., Time: 3-7+ years). You could consider allocating around 40% of your investable surplus to this, which is approximately ₹${(balance * 0.4).toFixed(2)}.\n`;
-        response += `3. **Blue-chip Equity Stocks**: Direct investment in stable companies. (Risk: Moderate to High, Returns: 10-18% p.a., Time: 5+ years). A smaller portion, say 20%, or ₹${(balance * 0.2).toFixed(2)}, could be considered if you have higher risk tolerance.\n`;
-        response += `4. **Debt Mutual Funds/Government Bonds**: Lower risk, stable returns. (Risk: Low, Returns: 7-9% p.a., Time: 1-5 years). About 20% or ₹${(balance * 0.2).toFixed(2)} could be allocated here for stability.\n`;
-        response += `5. **Gold**: Acts as a hedge against inflation. (Risk: Low to Moderate, Returns: 8-10% p.a., Time: 3-5+ years). A small allocation of 10% or ₹${(balance * 0.1).toFixed(2)} is often recommended.\n\n`;
-        response += `Remember to diversify and align investments with your risk tolerance and financial goals. I can navigate you to the Analytics & Investments page for more visual insights.`;
-      } else if (balance > 0) {
-        response += ` Building up your balance (currently ₹${balance.toFixed(2)}) is a great first step before diving into significant investments. Focus on building an emergency fund first.`;
+      const monthlyExpensesData = getMonthlyExpensesData(3);
+      const averageMonthlyExpenses = monthlyExpensesData.length > 0
+        ? monthlyExpensesData.reduce((sum, month) => sum + month.totalExpenses, 0) / monthlyExpensesData.length
+        : 0;
+      const emergencyFundTargetMin = averageMonthlyExpenses * 3;
+      const emergencyFundTargetMax = averageMonthlyExpenses * 6;
+
+      let response = `I can certainly help you with investment guidance, ${userProfile.name}!\n\n`;
+
+      if (averageMonthlyExpenses > 0 && balance < emergencyFundTargetMin) {
+        response += `Before diving into investments, it's crucial to build a solid emergency fund. Based on your average monthly expenses of ₹${averageMonthlyExpenses.toFixed(2)}, you should aim for an emergency fund of ₹${emergencyFundTargetMin.toFixed(2)} to ₹${emergencyFundTargetMax.toFixed(2)}. Your current balance is ₹${balance.toFixed(2)}. Let's focus on reaching that first!\n\n`;
+        response += `Once your emergency fund is secure, we can explore investment opportunities. Would you like tips on how to save for your emergency fund?`;
+      } else {
+        response += `Great news! With your current balance of ₹${balance.toFixed(2)}, you're in a good position to consider growing your wealth through investments. Here's a general guide on different investment types and a recommended allocation strategy:\n\n`;
+        response += `**Recommended Investment Allocation (based on your current balance):**\n`;
+        response += `1. **Emergency Fund (Very Low Risk, 5-7% p.a. returns, Short-term, Liquid)**: Ensure you have this covered. Your current balance is ₹${balance.toFixed(2)}.\n`;
+        response += `2. **Equity Mutual Funds (Moderate Risk, 10-14% p.a. returns, Time: 3-7+ years)**: Consider allocating around 40% of your investable surplus. This would be approximately ₹${(balance * 0.4).toFixed(2)}.\n`;
+        response += `3. **Blue-chip Equity Stocks (Moderate to High Risk, 10-18% p.a. returns, Time: 5+ years)**: For higher risk tolerance, a smaller portion, say 20%, which is about ₹${(balance * 0.2).toFixed(2)}.\n`;
+        response += `4. **Debt Mutual Funds/Government Bonds (Low Risk, 7-9% p.a. returns, Time: 1-5 years)**: For stability, about 20%, or ₹${(balance * 0.2).toFixed(2)}.\n`;
+        response += `5. **Gold (Low to Moderate Risk, 8-10% p.a. returns, Time: 3-5+ years)**: A small allocation of 10%, or ₹${(balance * 0.1).toFixed(2)}, is often recommended as a hedge.\n\n`;
+        response += `Remember to diversify and align investments with your personal risk tolerance and financial goals. You can find more visual insights and opportunities on the Analytics & Investments page. Would you like me to navigate you there?`;
       }
       return response;
     }
 
-    // --- General Financial Guidelines (with personalization) ---
-    else if (lowerCaseMessage.includes("budgeting tips") || lowerCaseMessage.includes("how to budget") || lowerCaseMessage.includes("create a budget") || lowerCaseMessage.includes("manage my money")) {
-      const totalIncome = getTotalIncome();
-      const totalExpenses = getTotalExpenses();
-      let response = "Budgeting is crucial for financial health! A popular method is the 50/30/20 rule: 50% for Needs, 30% for Wants, and 20% for Savings & Debt Repayment.";
-      if (totalIncome > 0 && totalExpenses > 0) {
-        response += ` With your current income of ₹${totalIncome.toFixed(2)} and expenses of ₹${totalExpenses.toFixed(2)}, you can start by categorizing your spending to see how you align with this rule.`;
-        if (totalExpenses > totalIncome * 0.8) { // If expenses are high
-          response += " It seems your expenses are quite high relative to your income. Let's identify areas in your spending analysis where you can cut back.";
-        }
-      } else {
-        response += " Tracking your income and expenses is the first step to understanding where your money is going. Start by recording all your transactions!";
-      }
-      return response;
-    } else if (lowerCaseMessage.includes("save money") || lowerCaseMessage.includes("saving tips") || lowerCaseMessage.includes("how to save") || lowerCaseMessage.includes("increase savings")) {
+    // --- Saving & Emergency Fund ---
+    else if (lowerCaseMessage.includes("save money") || lowerCaseMessage.includes("saving tips") || lowerCaseMessage.includes("how to save") || lowerCaseMessage.includes("increase savings") || lowerCaseMessage.includes("emergency fund")) {
       const savingsRate = getSavingsRate();
       const monthlyExpensesData = getMonthlyExpensesData(3);
       const averageMonthlyExpenses = monthlyExpensesData.length > 0
         ? monthlyExpensesData.reduce((sum, month) => sum + month.totalExpenses, 0) / monthlyExpensesData.length
         : 0;
 
-      let response = "To save effectively, set clear financial goals (e.g., emergency fund, down payment), automate your savings by setting up recurring transfers, cut unnecessary expenses, and review your subscriptions regularly.";
-      response += ` Your current savings rate is ${savingsRate.toFixed(2)}%.`;
+      let response = `Saving is a cornerstone of financial security, ${userProfile.name}!\n\n`;
+      response += `Your current savings rate is ${savingsRate.toFixed(2)}%. Financial experts often recommend aiming for 15-20% or more of your income for long-term goals.\n\n`;
+
       if (averageMonthlyExpenses > 0) {
         const emergencyFundTargetMin = averageMonthlyExpenses * 3;
         const emergencyFundTargetMax = averageMonthlyExpenses * 6;
-        response += ` Based on your average monthly expenses of ₹${averageMonthlyExpenses.toFixed(2)}, a 3-6 month emergency fund would be between ₹${emergencyFundTargetMin.toFixed(2)} and ₹${emergencyFundTargetMax.toFixed(2)}. Your current balance is ₹${balance.toFixed(2)}.`;
+        response += `**Emergency Fund Goal:**\n`;
+        response += `Based on your average monthly expenses of ₹${averageMonthlyExpenses.toFixed(2)}, a 3-6 month emergency fund would be between ₹${emergencyFundTargetMin.toFixed(2)} and ₹${emergencyFundTargetMax.toFixed(2)}. Your current balance is ₹${balance.toFixed(2)}.\n\n`;
+
         if (balance < emergencyFundTargetMin) {
-          response += " You're currently below your recommended emergency fund target. Prioritize building this fund before other investments. Aim to save at least 15-20% of your income consistently.";
+          const needed = emergencyFundTargetMin - balance;
+          response += `You're currently below your recommended emergency fund target. Prioritize building this fund! Try to save an additional ₹${needed.toFixed(2)} to reach the minimum. Consider setting up automated transfers to your savings and identifying areas to cut back on non-essential spending.\n`;
         } else if (balance >= emergencyFundTargetMax) {
-          response += " You have a solid emergency fund! Now you can confidently explore other investment opportunities.";
+          response += `You have a solid emergency fund! This is excellent. Now you can confidently explore other investment opportunities to make your money grow further.\n`;
+        } else { // Between min and max
+          response += `You're on your way to a strong emergency fund! Keep building it up. You have ₹${(emergencyFundTargetMax - balance).toFixed(2)} more to save to reach the upper end of the recommendation.\n`;
         }
       } else {
-        response += " Start by tracking your monthly expenses to determine a realistic target for your emergency fund. Once you have some transaction history, I can help you calculate a target.";
+        response += "To set an emergency fund target, we need more data on your monthly expenses. Start by consistently recording your withdrawals and transfers in the Transactions page.\n";
       }
+
       if (savingsRate < 15 && savingsRate >= 0) {
-        response += " Consider increasing your automated transfers or finding areas to reduce spending to boost this rate. Even small, consistent savings add up over time!";
+        response += `\nTo boost your savings rate, consider increasing your automated transfers or finding areas to reduce spending. Even small, consistent savings add up over time!`;
       } else if (savingsRate < 0) {
-        response += " Currently, your spending exceeds your income. Focusing on reducing expenses is the first step to start saving.";
+        response += `\nCurrently, your spending exceeds your income. Focusing on reducing expenses is the first step to start saving. Review your spending analysis on the Dashboard to find areas to cut back.`;
       } else {
-        response += " That's a great savings rate! Keep it up and consider reviewing your investment options to make your savings work harder.";
+        response += `\nThat's a great savings rate! Keep it up and consider reviewing your investment options to make your savings work harder.`;
       }
       return response;
-    } else if (lowerCaseMessage.includes("what are stocks") || lowerCaseMessage.includes("stocks explained") || lowerCaseMessage.includes("equity")) {
+    }
+
+    // --- What are Stocks/Mutual Funds (detailed) ---
+    else if (lowerCaseMessage.includes("what are stocks") || lowerCaseMessage.includes("stocks explained") || lowerCaseMessage.includes("equity")) {
       return "Stocks represent ownership shares in a company. When you buy a stock, you own a small piece of that company. Their value can fluctuate based on company performance, industry trends, and overall market conditions. They offer potential for high returns (e.g., 10-18% p.a. for blue-chip stocks) but also come with higher risk and are generally suitable for a long-term investment horizon (5+ years).";
     } else if (lowerCaseMessage.includes("what are mutual funds") || lowerCaseMessage.includes("mutual funds explained") || lowerCaseMessage.includes("sip")) {
       return "Mutual funds pool money from many investors to invest in a diversified portfolio of stocks, bonds, or other securities. They are managed by professional fund managers, offering diversification and professional management for a fee. They are a popular option for systematic investment plans (SIPs) and can offer moderate returns (e.g., 10-14% p.a. for equity MFs) with moderate risk over a medium to long-term horizon (3-7 years).";
-    } else if (lowerCaseMessage.includes("debt management") || lowerCaseMessage.includes("pay off debt") || lowerCaseMessage.includes("handle debt") || lowerCaseMessage.includes("reduce debt")) {
+    }
+
+    // --- Debt Management ---
+    else if (lowerCaseMessage.includes("debt management") || lowerCaseMessage.includes("pay off debt") || lowerCaseMessage.includes("handle debt") || lowerCaseMessage.includes("reduce debt")) {
       const totalExpenses = getTotalExpenses();
       let response = "Effective debt management involves prioritizing high-interest debts first. Strategies like the debt snowball (pay smallest debt first) or debt avalanche (pay highest interest debt first) can be helpful. Creating a strict budget and avoiding new debt are also key.";
       if (totalExpenses > getTotalIncome()) {
         response += " Given your current expenses exceeding income, focusing on debt reduction and avoiding new debt is critical. Review your spending to free up funds for repayments.";
-      }
-      return response;
-    } else if (lowerCaseMessage.includes("emergency fund")) {
-      const monthlyExpensesData = getMonthlyExpensesData(3); // Get last 3 months of expense data
-      const averageMonthlyExpenses = monthlyExpensesData.length > 0
-        ? monthlyExpensesData.reduce((sum, month) => sum + month.totalExpenses, 0) / monthlyExpensesData.length
-        : 0;
-
-      let response = "An emergency fund is a crucial safety net! It's typically 3-6 months' worth of living expenses saved in an easily accessible, separate account.";
-      if (averageMonthlyExpenses > 0) {
-        const emergencyFundTargetMin = averageMonthlyExpenses * 3;
-        const emergencyFundTargetMax = averageMonthlyExpenses * 6;
-        response += ` If your average monthly expenses are around ₹${averageMonthlyExpenses.toFixed(2)}, you should aim for an emergency fund of ₹${emergencyFundTargetMin.toFixed(2)} to ₹${emergencyFundTargetMax.toFixed(2)}. Your current balance is ₹${balance.toFixed(2)}. How close are you to this goal?`;
-        if (balance < emergencyFundTargetMin) {
-          response += " You're currently below your recommended emergency fund target. Prioritize building this fund before other investments.";
-        } else if (balance >= emergencyFundTargetMax) {
-          response += " You have a solid emergency fund! Now you can confidently explore other investment opportunities.";
-        }
-      } else {
-        response += " Start by tracking your monthly expenses to determine a realistic target for your emergency fund. Once you have some transaction history, I can help you calculate a target.";
       }
       return response;
     } else if (lowerCaseMessage.includes("financial goals") || lowerCaseMessage.includes("set goals")) {
