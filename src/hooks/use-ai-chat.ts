@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { aiService, AIContext, AIChatMessage } from '@/lib/ai-service';
 import { useFinance } from '@/context/FinanceContext';
 
@@ -10,20 +10,55 @@ export interface ChatMessage {
 }
 
 export const useAIChat = () => {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: '1',
-      text: 'Hello! I\'m your AI financial assistant. How can I help you today?',
-      sender: 'bot',
-      timestamp: new Date()
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    const savedMessages = localStorage.getItem('finassist_ai_chat_messages');
+    if (savedMessages) {
+      try {
+        const parsed = JSON.parse(savedMessages);
+        // Convert timestamp strings back to Date objects
+        return parsed.map((msg: any) => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp)
+        }));
+      } catch (e) {
+        console.error('Failed to parse saved messages', e);
+      }
     }
-  ]);
+    
+    return [
+      {
+        id: '1',
+        text: 'Hello! I\'m your AI financial assistant. How can I help you manage your finances today?',
+        sender: 'bot',
+        timestamp: new Date()
+      }
+    ];
+  });
+  
   const [isLoading, setIsLoading] = useState(false);
+  const [conversationTopic, setConversationTopic] = useState<string | null>(null);
   const financeContext = useFinance();
   const conversationHistory = useRef<AIChatMessage[]>([]);
+  
+  // Save messages to localStorage
+  useEffect(() => {
+    localStorage.setItem('finassist_ai_chat_messages', JSON.stringify(messages));
+  }, [messages]);
 
   const extractAIContext = useCallback((): AIContext => {
-    const { balance, transactions, userProfile, getSpendingCategories, getMonthlyExpensesData, getMonthlyIncomeData, getTotalIncome, getTotalExpenses, getNetSavings, getSavingsRate, getRecentTransactions } = financeContext;
+    const { 
+      balance, 
+      transactions, 
+      userProfile, 
+      getSpendingCategories, 
+      getMonthlyExpensesData, 
+      getMonthlyIncomeData, 
+      getTotalIncome, 
+      getTotalExpenses, 
+      getNetSavings, 
+      getSavingsRate, 
+      getRecentTransactions 
+    } = financeContext;
     
     return {
       userProfile,
@@ -33,9 +68,9 @@ export const useAIChat = () => {
       netSavings: getNetSavings(),
       savingsRate: getSavingsRate(),
       spendingCategories: getSpendingCategories(),
-      recentTransactions: getRecentTransactions(10),
-      monthlyIncomeData: getMonthlyIncomeData(6),
-      monthlyExpensesData: getMonthlyExpensesData(6)
+      recentTransactions: getRecentTransactions(15),
+      monthlyIncomeData: getMonthlyIncomeData(12),
+      monthlyExpensesData: getMonthlyExpensesData(12)
     };
   }, [financeContext]);
 
@@ -73,6 +108,18 @@ export const useAIChat = () => {
       };
       
       setMessages(prev => [...prev, botMessage]);
+      
+      // Update conversation history
+      conversationHistory.current = [
+        ...conversationHistory.current,
+        { role: 'user', parts: [{ text: message }] },
+        { role: 'model', parts: [{ text: aiResponse }] }
+      ];
+      
+      // Keep only the last 10 exchanges to manage context length
+      if (conversationHistory.current.length > 20) {
+        conversationHistory.current = conversationHistory.current.slice(-20);
+      }
     } catch (error: any) {
       const errorMessage: ChatMessage = {
         id: (Date.now() + 2).toString(),
@@ -88,21 +135,29 @@ export const useAIChat = () => {
   }, [isLoading, extractAIContext]);
 
   const clearConversation = useCallback(() => {
-    setMessages([
-      {
-        id: '1',
-        text: 'Hello! I\'m your AI financial assistant. How can I help you today?',
-        sender: 'bot',
-        timestamp: new Date()
-      }
-    ]);
+    const clearMessage: ChatMessage = {
+      id: Date.now().toString(),
+      text: 'Conversation cleared. How can I help you today?',
+      sender: 'bot',
+      timestamp: new Date()
+    };
+    
+    setMessages([clearMessage]);
     conversationHistory.current = [];
+    setConversationTopic(null);
+    localStorage.removeItem('finassist_ai_chat_messages');
+  }, []);
+
+  const setTopic = useCallback((topic: string) => {
+    setConversationTopic(topic);
   }, []);
 
   return {
     messages,
     isLoading,
+    conversationTopic,
     sendMessage,
-    clearConversation
+    clearConversation,
+    setTopic
   };
 };
