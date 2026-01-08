@@ -28,7 +28,7 @@ export interface AIChatMessage {
 
 export class AIService {
   private apiKey: string = "AIzaSyB6D6kENFR3WR9TochtUVPp211wlWAlnBQ"; // Predefined API key
-  private apiUrl: string = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+  private apiUrl: string = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
 
   constructor() {
     // Check for API key in environment variables (for development override)
