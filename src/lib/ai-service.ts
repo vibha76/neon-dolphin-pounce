@@ -1,5 +1,5 @@
 // AI service integration for FinAssist
-// This file handles integration with OpenRouter API using a predefined API key
+// This file handles integration with OpenAI API using a predefined API key
 
 export interface AIContext {
   userProfile: {
@@ -27,12 +27,12 @@ export interface AIChatMessage {
 }
 
 export class AIService {
-  private apiKey: string = "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"; // Predefined API key
-  private apiUrl: string = 'https://openrouter.ai/api/v1/chat/completions';
+  private apiKey: string = "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"; // Predefined API key
+  private apiUrl: string = 'https://api.openai.com/v1/chat/completions';
 
   constructor() {
     // Check for API key in environment variables (for development override)
-    const envApiKey = import.meta.env?.VITE_OPENROUTER_API_KEY || null;
+    const envApiKey = import.meta.env?.VITE_OPENAI_API_KEY || null;
     if (envApiKey) {
       this.apiKey = envApiKey;
     }
@@ -55,26 +55,25 @@ export class AIService {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': window.location.origin,
-          'X-Title': 'FinAssist'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: "google/gemini-flash-1.5",
-          messages: messages
+          model: "gpt-4o-mini",
+          messages: messages,
+          temperature: 0.7
         })
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(`OpenRouter API error: ${errorData.error?.message || response.statusText}`);
+        throw new Error(`OpenAI API error: ${errorData.error?.message || response.statusText}`);
       }
 
       const data = await response.json();
       
       // Check if response has content
       if (!data.choices || data.choices.length === 0 || !data.choices[0].message) {
-        throw new Error("No content in response from OpenRouter API");
+        throw new Error("No content in response from OpenAI API");
       }
       
       return data.choices[0].message.content.trim();
@@ -127,7 +126,7 @@ export class AIService {
       Never provide investment advice that could be risky.
     `;
 
-    // Format messages for OpenRouter API
+    // Format messages for OpenAI API
     const formattedMessages = [
       {
         role: "system",
