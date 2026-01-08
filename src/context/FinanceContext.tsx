@@ -4,7 +4,7 @@ import React, { createContext, useState, useContext, useEffect, ReactNode } from
 import { showSuccess, showError } from "@/utils/toast";
 import { format, parseISO, startOfMonth, isSameMonth, subMonths } from 'date-fns';
 
-export interface Transaction { // Added export keyword here
+export interface Transaction {
   id: string;
   type: "deposit" | "withdraw" | "transfer_out" | "transfer_in";
   amount: number;
@@ -38,14 +38,14 @@ interface FinanceContextType {
   updateUserProfile: (name: string, mobile: string, initialBalance: number) => void;
   loginUser: (email: string, name?: string) => UserProfile | null;
   getSpendingCategories: () => Record<string, number>;
-  getMonthlyExpensesData: (months?: number) => { name: string; totalExpenses: number }[]; // Renamed
-  getMonthlyIncomeData: (months?: number) => { name: string; totalIncome: number }[]; // New function
+  getMonthlyExpensesData: (months?: number) => { name: string; totalExpenses: number }[];
+  getMonthlyIncomeData: (months?: number) => { name: string; totalIncome: number }[];
   getBalanceHistoryData: (months?: number) => { name: string; balance: number }[];
   getRecentTransactions: (limit?: number) => Transaction[];
   getSavingsRate: (months?: number) => number;
-  getTotalIncome: () => number; // New function
-  getTotalExpenses: () => number; // New function
-  getNetSavings: () => number; // New function
+  getTotalIncome: () => number;
+  getTotalExpenses: () => number;
+  getNetSavings: () => number;
   logout: () => void;
 }
 
@@ -313,7 +313,7 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     return categories;
   };
 
-  const getMonthlyExpensesData = (months: number = 6) => { // Renamed from getMonthlySpendingData
+  const getMonthlyExpensesData = (months: number = 6) => {
     const monthlyExpenses: Record<string, number> = {};
     const today = new Date();
 
@@ -337,7 +337,7 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     return data;
   };
 
-  const getMonthlyIncomeData = (months: number = 6) => { // New function
+  const getMonthlyIncomeData = (months: number = 6) => {
     const monthlyIncome: Record<string, number> = {};
     const today = new Date();
 
@@ -378,13 +378,8 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     for (let i = months - 1; i >= 0; i--) {
       const date = subMonths(today, i);
       const monthKey = format(startOfMonth(date), 'MMM yyyy');
-      const existingEntry = data.find(entry => entry.name === monthKey);
-      if (!existingEntry) {
-        const lastKnownBalance = data.length > 0 ? data[data.length - 1].balance : 0;
-        data.push({ name: monthKey, balance: balanceForMonth !== undefined ? balanceForMonth : lastKnownBalance });
-        // If balanceForMonth is undefined, use the last known balance.
-        // This ensures the chart has a continuous line even if there are gaps in snapshots.
-      }
+      const lastKnownBalance = data.length > 0 ? data[data.length - 1].balance : 0;
+      data.push({ name: monthKey, balance: monthlyBalances[monthKey] !== undefined ? monthlyBalances[monthKey] : lastKnownBalance });
     }
     return data.sort((a, b) => parseISO(a.name).getTime() - parseISO(b.name).getTime());
   };
@@ -496,14 +491,14 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
         updateUserProfile,
         loginUser,
         getSpendingCategories,
-        getMonthlyExpensesData, // Renamed
-        getMonthlyIncomeData, // New
+        getMonthlyExpensesData,
+        getMonthlyIncomeData,
         getBalanceHistoryData,
         getRecentTransactions,
         getSavingsRate,
-        getTotalIncome, // New
-        getTotalExpenses, // New
-        getNetSavings, // New
+        getTotalIncome,
+        getTotalExpenses,
+        getNetSavings,
         logout,
       }}
     >
