@@ -173,17 +173,17 @@ const Chatbot: React.FC = () => {
     } else if (lowerCaseMessage.includes("investing for beginners") || lowerCaseMessage.includes("how to start investing") || lowerCaseMessage.includes("investment advice") || lowerCaseMessage.includes("where to invest")) {
       let response = "Starting to invest can be exciting! First, ensure you have an emergency fund. Then, understand your risk tolerance. Consider diversified options like low-cost index funds or ETFs. Start small, invest regularly, and continuously educate yourself.";
       if (balance > 50000) { // More specific advice for higher balance
-        response += ` With your current balance of ₹${balance.toFixed(2)}, you have significant capital to begin. The Analytics & Investments page offers some recommendations tailored for Indian markets, including options like Nifty 50 Index Funds or Government Bonds.`;
+        response += ` With your current balance of ₹${balance.toFixed(2)}, you have significant capital to begin. The Analytics & Investments page offers some recommendations tailored for Indian markets, including options like Nifty 50 Index Funds (Moderate Risk, 12-15% p.a. returns) or Government Bonds (Low Risk, 7-8% p.a. returns). Remember, investments typically require a long-term horizon (5+ years) for significant growth.`;
       } else if (balance > 10000) {
-        response += ` With ₹${balance.toFixed(2)}, you have a good starting point. Focus on consistent, small investments.`;
+        response += ` With ₹${balance.toFixed(2)}, you have a good starting point. Focus on consistent, small investments, perhaps through SIPs in diversified mutual funds (Moderate Risk, 10-14% p.a. returns). Aim for a medium-term horizon (3-5 years).`;
       } else {
-        response += ` Building up your balance (currently ₹${balance.toFixed(2)}) and establishing an emergency fund should be your priority before significant investments.`;
+        response += ` Building up your balance (currently ₹${balance.toFixed(2)}) and establishing an emergency fund should be your priority before significant investments. Once you have at least ₹10,000 saved, we can explore low-risk options.`;
       }
       return response;
     } else if (lowerCaseMessage.includes("what are stocks") || lowerCaseMessage.includes("stocks explained") || lowerCaseMessage.includes("equity")) {
-      return "Stocks represent ownership shares in a company. When you buy a stock, you own a small piece of that company. Their value can fluctuate based on company performance, industry trends, and overall market conditions. They offer potential for high returns but also come with higher risk.";
+      return "Stocks represent ownership shares in a company. When you buy a stock, you own a small piece of that company. Their value can fluctuate based on company performance, industry trends, and overall market conditions. They offer potential for high returns (e.g., 10-18% p.a. for blue-chip stocks) but also come with higher risk and are generally suitable for a long-term investment horizon (5+ years).";
     } else if (lowerCaseMessage.includes("what are mutual funds") || lowerCaseMessage.includes("mutual funds explained") || lowerCaseMessage.includes("sip")) {
-      return "Mutual funds pool money from many investors to invest in a diversified portfolio of stocks, bonds, or other securities. They are managed by professional fund managers, offering diversification and professional management for a fee. They are a popular option for systematic investment plans (SIPs).";
+      return "Mutual funds pool money from many investors to invest in a diversified portfolio of stocks, bonds, or other securities. They are managed by professional fund managers, offering diversification and professional management for a fee. They are a popular option for systematic investment plans (SIPs) and can offer moderate returns (e.g., 10-14% p.a. for equity MFs) with moderate risk over a medium to long-term horizon (3-7 years).";
     } else if (lowerCaseMessage.includes("debt management") || lowerCaseMessage.includes("pay off debt") || lowerCaseMessage.includes("handle debt") || lowerCaseMessage.includes("reduce debt")) {
       const totalExpenses = getTotalExpenses();
       let response = "Effective debt management involves prioritizing high-interest debts first. Strategies like the debt snowball (pay smallest debt first) or debt avalanche (pay highest interest debt first) can be helpful. Creating a strict budget and avoiding new debt are also key.";
