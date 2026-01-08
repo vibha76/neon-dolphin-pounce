@@ -133,7 +133,7 @@ const Chatbot: React.FC = () => {
     }
 
     // --- Investments & Analytics ---
-    else if (lowerCaseMessage.includes("investments") || lowerCaseMessage.includes("analytics") || lowerCaseMessage.includes("financial insights") || lowerCaseMessage.includes("grow my money") || lowerCaseMessage.includes("investment options") || lowerCaseMessage.includes("where to invest")) {
+    else if (lowerCaseMessage.includes("investments") || lowerCaseMessage.includes("analytics") || lowerCaseMessage.includes("financial insights") || lowerCaseMessage.includes("grow my money") || lowerCaseMessage.includes("investment options") || lowerCaseMessage.includes("where to invest") || lowerCaseMessage.includes("how to invest")) {
       const monthlyExpensesData = getMonthlyExpensesData(3);
       const averageMonthlyExpenses = monthlyExpensesData.length > 0
         ? monthlyExpensesData.reduce((sum, month) => sum + month.totalExpenses, 0) / monthlyExpensesData.length
