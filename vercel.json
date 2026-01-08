@@ -2,6 +2,10 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
+      "source": "/api/ai/chat",
+      "destination": "/src/lib/serverless-ai-handler.ts"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

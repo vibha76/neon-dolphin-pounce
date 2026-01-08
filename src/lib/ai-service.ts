@@ -28,7 +28,7 @@ export interface AIChatMessage {
 
 export class AIService {
   private apiKey: string = "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"; // Predefined API key
-  private apiUrl: string = 'https://api.openai.com/v1/chat/completions';
+  private apiUrl: string = '/api/ai/chat'; // Proxy endpoint
 
   constructor() {
     // Check for API key in environment variables (for development override)
@@ -49,34 +49,31 @@ export class AIService {
   ): Promise<string> {
     try {
       const contextString = this.formatContextForAI(context);
-      const messages = this.prepareMessages(message, contextString, conversationHistory);
-
+      
       const response = await fetch(this.apiUrl, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: messages,
-          temperature: 0.7
+          message: message,
+          context: contextString
         })
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`OpenAI API error: ${errorData.error?.message || response.statusText}`);
+        const errorText = await response.text();
+        throw new Error(`AI Service error: ${response.status} ${response.statusText} - ${errorText}`);
       }
 
       const data = await response.json();
       
       // Check if response has content
-      if (!data.choices || data.choices.length === 0 || !data.choices[0].message) {
-        throw new Error("No content in response from OpenAI API");
+      if (!data.response) {
+        throw new Error("No content in response from AI service");
       }
       
-      return data.choices[0].message.content.trim();
+      return data.response;
     } catch (error: any) {
       console.error('AI Service Error:', error);
       return `Sorry, I encountered an error: ${error.message}. Please try again.`;
@@ -101,44 +98,6 @@ export class AIService {
       monthlyIncomeData: context.monthlyIncomeData,
       monthlyExpensesData: context.monthlyExpensesData
     }, null, 2);
-  }
-
-  private prepareMessages(
-    message: string,
-    context: string,
-    conversationHistory: AIChatMessage[]
-  ): any[] {
-    const systemPrompt = `
-      You are FinAssist AI, a financial assistant helping users manage their personal finances in India.
-      You have access to the user's financial data including:
-      - Current balance
-      - Income and expense history
-      - Spending categories
-      - Transaction history
-      - Savings rate
-      
-      Provide personalized financial advice based on their actual data.
-      Be concise, helpful, and avoid generic advice.
-      When appropriate, suggest specific actions based on their spending patterns.
-      If asked about features not available, explain what the app can do.
-      Always respond in the same language the user uses.
-      Format amounts in Indian Rupees (₹).
-      Never provide investment advice that could be risky.
-    `;
-
-    // Format messages for OpenAI API
-    const formattedMessages = [
-      {
-        role: "system",
-        content: systemPrompt
-      },
-      {
-        role: "user",
-        content: `User's financial context:\n${context}\n\nUser's message: ${message}`
-      }
-    ];
-
-    return formattedMessages;
   }
 }
 
