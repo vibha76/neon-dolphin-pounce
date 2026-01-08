@@ -1,5 +1,5 @@
 // AI service integration for FinAssist
-// This file handles integration with Google's Gemini API
+// This file handles integration with Google's Gemini API using a predefined API key
 
 export interface AIContext {
   userProfile: {
@@ -27,21 +27,15 @@ export interface AIChatMessage {
 }
 
 export class AIService {
-  private apiKey: string | null = null;
+  private apiKey: string = "AIzaSyB6D6kENFR3WR9TochtUVPp211wlWAlnBQ"; // Predefined API key
   private apiUrl: string = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
 
-  constructor(apiKey?: string) {
-    // Check for API key in environment variables first
+  constructor() {
+    // Check for API key in environment variables (for development override)
     const envApiKey = import.meta.env?.VITE_GEMINI_API_KEY || null;
     if (envApiKey) {
       this.apiKey = envApiKey;
-    } else if (apiKey) {
-      this.apiKey = apiKey;
     }
-  }
-
-  public setApiKey(apiKey: string) {
-    this.apiKey = apiKey;
   }
 
   public isConfigured(): boolean {
@@ -53,10 +47,6 @@ export class AIService {
     context: AIContext,
     conversationHistory: AIChatMessage[] = []
   ): Promise<string> {
-    if (!this.apiKey) {
-      return "AI service is not configured. Please set up your Gemini API key to enable AI-powered financial advice.";
-    }
-
     try {
       const contextString = this.formatContextForAI(context);
       const messages = this.prepareMessages(message, contextString, conversationHistory);
