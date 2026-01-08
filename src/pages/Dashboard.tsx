@@ -15,7 +15,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { showError, showSuccess } from "@/utils/toast";
 
-
 const Dashboard: React.FC = () => {
   const { balance, userProfile, getRecentTransactions, deposit, withdraw, transfer, registeredUsers, getMonthlyIncomeData } = useFinance();
   const recentTransactions = getRecentTransactions(5);
@@ -86,7 +85,6 @@ const Dashboard: React.FC = () => {
     setTransferDescription("");
   };
 
-
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {/* Welcome Card */}
@@ -101,22 +99,23 @@ const Dashboard: React.FC = () => {
           <div>
             <p className="text-sm opacity-80">Account: ACED6FE132BF</p>
           </div>
-          <p className="text-sm opacity-80">software engineer</p> {/* Placeholder for profession */}
+          <p className="text-sm opacity-80">software engineer</p>
+          {/* Placeholder for profession */}
         </CardContent>
       </Card>
 
       {/* Info Cards - Track Your Spending & Build Emergency Fund */}
-      <InfoCard
-        icon={Info}
-        title="Track Your Spending"
-        description="Monitor your expenses across categories to identify savings opportunities."
-        iconColorClass="text-blue-500"
+      <InfoCard 
+        icon={Info} 
+        title="Track Your Spending" 
+        description="Monitor your expenses across categories to identify savings opportunities." 
+        iconColorClass="text-blue-500" 
       />
-      <InfoCard
-        icon={CheckCircle}
-        title="Build Emergency Fund"
-        description="Aim to save 3-6 months of expenses for financial security."
-        iconColorClass="text-green-500"
+      <InfoCard 
+        icon={CheckCircle} 
+        title="Build Emergency Fund" 
+        description="Aim to save 3-6 months of expenses for financial security." 
+        iconColorClass="text-green-500" 
       />
 
       {/* Transactions and Recent Transactions */}
@@ -158,23 +157,23 @@ const Dashboard: React.FC = () => {
               <form onSubmit={handleDeposit} className="grid gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="deposit-amount">Amount (₹)</Label>
-                  <Input
-                    id="deposit-amount"
-                    type="number"
-                    placeholder="1000.00"
-                    value={depositAmount}
-                    onChange={(e) => setDepositAmount(e.target.value)}
-                    required
+                  <Input 
+                    id="deposit-amount" 
+                    type="number" 
+                    placeholder="1000.00" 
+                    value={depositAmount} 
+                    onChange={(e) => setDepositAmount(e.target.value)} 
+                    required 
                   />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="deposit-description">Description</Label>
-                  <Input
-                    id="deposit-description"
-                    type="text"
-                    placeholder="Salary, Gift, etc."
-                    value={depositDescription}
-                    onChange={(e) => setDepositDescription(e.target.value)}
+                  <Input 
+                    id="deposit-description" 
+                    type="text" 
+                    placeholder="Salary, Gift, etc." 
+                    value={depositDescription} 
+                    onChange={(e) => setDepositDescription(e.target.value)} 
                   />
                 </div>
                 <Button type="submit" className="w-full">
@@ -186,23 +185,23 @@ const Dashboard: React.FC = () => {
               <form onSubmit={handleWithdraw} className="grid gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="withdraw-amount">Amount (₹)</Label>
-                  <Input
-                    id="withdraw-amount"
-                    type="number"
-                    placeholder="500.00"
-                    value={withdrawAmount}
-                    onChange={(e) => setWithdrawAmount(e.target.value)}
-                    required
+                  <Input 
+                    id="withdraw-amount" 
+                    type="number" 
+                    placeholder="500.00" 
+                    value={withdrawAmount} 
+                    onChange={(e) => setWithdrawAmount(e.target.value)} 
+                    required 
                   />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="withdraw-description">Description</Label>
-                  <Input
-                    id="withdraw-description"
-                    type="text"
-                    placeholder="Rent, Shopping, etc."
-                    value={withdrawDescription}
-                    onChange={(e) => setWithdrawDescription(e.target.value)}
+                  <Input 
+                    id="withdraw-description" 
+                    type="text" 
+                    placeholder="Rent, Shopping, etc." 
+                    value={withdrawDescription} 
+                    onChange={(e) => setWithdrawDescription(e.target.value)} 
                   />
                 </div>
                 <Button type="submit" className="w-full">
@@ -214,13 +213,13 @@ const Dashboard: React.FC = () => {
               <form onSubmit={handleTransfer} className="grid gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="transfer-recipient">Recipient Mobile Number</Label>
-                  <Input
-                    id="transfer-recipient"
-                    type="tel"
-                    placeholder="9876543210"
-                    value={transferRecipientMobile}
-                    onChange={(e) => setTransferRecipientMobile(e.target.value)}
-                    required
+                  <Input 
+                    id="transfer-recipient" 
+                    type="tel" 
+                    placeholder="9876543210" 
+                    value={transferRecipientMobile} 
+                    onChange={(e) => setTransferRecipientMobile(e.target.value)} 
+                    required 
                   />
                   <p className="text-sm text-muted-foreground">
                     Registered users for transfer: {registeredUsers.map(u => u.mobile).join(", ")}
@@ -228,23 +227,23 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="transfer-amount">Amount (₹)</Label>
-                  <Input
-                    id="transfer-amount"
-                    type="number"
-                    placeholder="200.00"
-                    value={transferAmount}
-                    onChange={(e) => setTransferAmount(e.target.value)}
-                    required
+                  <Input 
+                    id="transfer-amount" 
+                    type="number" 
+                    placeholder="200.00" 
+                    value={transferAmount} 
+                    onChange={(e) => setTransferAmount(e.target.value)} 
+                    required 
                   />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="transfer-description">Description</Label>
-                  <Input
-                    id="transfer-description"
-                    type="text"
-                    placeholder="Family, Friend, etc."
-                    value={transferDescription}
-                    onChange={(e) => setTransferDescription(e.target.value)}
+                  <Input 
+                    id="transfer-description" 
+                    type="text" 
+                    placeholder="Family, Friend, etc." 
+                    value={transferDescription} 
+                    onChange={(e) => setTransferDescription(e.target.value)} 
                   />
                 </div>
                 <Button type="submit" className="w-full">

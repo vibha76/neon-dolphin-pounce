@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Home, User, Landmark, PiggyBank, Handshake, LogOut, BarChart2 } from "lucide-react";
 import { useFinance } from "@/context/FinanceContext";
 import { ThemeToggle } from "./ThemeToggle";
-import Chatbot from "./Chatbot"; // Import the new Chatbot component
+import AIChatbot from "./AIChatbot"; // Import the new AIChatbot component
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -32,31 +32,37 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <nav className="flex items-center space-x-4">
             <Button variant="ghost" asChild>
               <Link to="/dashboard">
-                <Home className="mr-2 h-4 w-4" /> Dashboard
+                <Home className="mr-2 h-4 w-4" />
+                Dashboard
               </Link>
             </Button>
             <Button variant="ghost" asChild>
               <Link to="/analytics-investments">
-                <BarChart2 className="mr-2 h-4 w-4" /> Analytics & Investments
+                <BarChart2 className="mr-2 h-4 w-4" />
+                Analytics & Investments
               </Link>
             </Button>
             <Button variant="ghost" asChild>
               <Link to="/profile">
-                <User className="mr-2 h-4 w-4" /> Profile
+                <User className="mr-2 h-4 w-4" />
+                Profile
               </Link>
             </Button>
             <Button variant="ghost" asChild>
               <Link to="/transactions">
-                <PiggyBank className="mr-2 h-4 w-4" /> Transactions
+                <PiggyBank className="mr-2 h-4 w-4" />
+                Transactions
               </Link>
             </Button>
             <Button variant="ghost" asChild>
               <Link to="/loan-assessment">
-                <Handshake className="mr-2 h-4 w-4" /> Loan
+                <Handshake className="mr-2 h-4 w-4" />
+                Loan
               </Link>
             </Button>
             <Button variant="ghost" onClick={handleLogout}>
-              <LogOut className="mr-2 h-4 w-4" /> Logout
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
             </Button>
             <ThemeToggle />
           </nav>
@@ -66,7 +72,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <footer className="border-t bg-background">
         {/* The MadeWithDyad component was removed from the codebase. */}
       </footer>
-      <Chatbot /> {/* Add the Chatbot component here */}
+      <AIChatbot /> {/* Add the AIChatbot component here */}
     </div>
   );
 };
