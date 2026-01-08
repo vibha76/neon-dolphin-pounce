@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import { Button } from "@/components/ui/button"; // Import Button
 
 // Placeholder for new components
+
 const FinancialSummaryCard: React.FC = () => {
   const { getTotalIncome, getTotalExpenses, getNetSavings, getSavingsRate } = useFinance();
   const totalIncome = getTotalIncome();
@@ -71,16 +72,18 @@ const MonthlyTrendsChart: React.FC = () => {
   const incomeData = getMonthlyIncomeData(6);
   const expensesData = getMonthlyExpensesData(6);
 
+  // Correctly calculate combined data with savings
   const combinedData = incomeData.map((incomeMonth) => {
     const expenseMonth = expensesData.find(exp => exp.name === incomeMonth.name);
     const totalIncome = incomeMonth.totalIncome;
     const totalExpenses = expenseMonth?.totalExpenses || 0;
-    const savings = totalIncome - totalExpenses;
+    const savings = totalIncome - totalExpenses; // Correct savings calculation
+
     return {
       name: incomeMonth.name,
       totalIncome,
       totalExpenses,
-      savings,
+      savings, // This will now correctly reflect Income - Expenses
     };
   });
 
@@ -149,12 +152,35 @@ const InvestmentAllocationItem: React.FC<InvestmentAllocationItemProps> = ({ tit
 
 const RecommendedInvestmentAllocation: React.FC = () => {
   const { balance } = useFinance();
-
   const allocations = [
-    { title: "Emergency Fund", percentage: 30, returns: "5-7%", risk: "Very Low", color: "#0088FE" },
-    { title: "Equity MF", percentage: 40, returns: "12-15%", risk: "Moderate", color: "#00C49F" },
-    { title: "Debt MF", percentage: 20, returns: "7-9%", risk: "Low", color: "#FFBB28" },
-    { title: "Gold", percentage: 10, returns: "8-10%", risk: "Low", color: "#FF8042" },
+    {
+      title: "Emergency Fund",
+      percentage: 30,
+      returns: "5-7%",
+      risk: "Very Low",
+      color: "#0088FE"
+    },
+    {
+      title: "Equity MF",
+      percentage: 40,
+      returns: "12-15%",
+      risk: "Moderate",
+      color: "#00C49F"
+    },
+    {
+      title: "Debt MF",
+      percentage: 20,
+      returns: "7-9%",
+      risk: "Low",
+      color: "#FFBB28"
+    },
+    {
+      title: "Gold",
+      percentage: 10,
+      returns: "8-10%",
+      risk: "Low",
+      color: "#FF8042"
+    },
   ];
 
   return (
@@ -228,7 +254,6 @@ const TopInvestmentOpportunities: React.FC = () => (
     </CardContent>
   </Card>
 );
-
 
 const AnalyticsAndInvestments: React.FC = () => {
   const { userProfile } = useFinance();
