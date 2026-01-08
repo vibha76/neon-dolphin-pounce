@@ -49,8 +49,13 @@ export class AIService {
   ): Promise<string> {
     try {
       const contextString = this.formatContextForAI(context);
-      
-      const response = await fetch(this.apiUrl, {
+
+      // Use relative path for development, absolute path for production
+      const endpoint = import.meta.env?.MODE === 'development'
+        ? 'http://localhost:8080/api/ai/chat'
+        : '/api/ai/chat';
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -67,12 +72,12 @@ export class AIService {
       }
 
       const data = await response.json();
-      
+
       // Check if response has content
       if (!data.response) {
         throw new Error("No content in response from AI service");
       }
-      
+
       return data.response;
     } catch (error: any) {
       console.error('AI Service Error:', error);
