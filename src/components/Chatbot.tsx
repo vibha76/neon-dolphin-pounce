@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageSquare, Send, X } from "lucide-react";
 import { useFinance } from "@/context/FinanceContext";
 import { useNavigate } from "react-router-dom";
+import { format } from 'date-fns'; // Import format for date handling
 
 interface Message {
   text: string;
@@ -20,7 +21,7 @@ const Chatbot: React.FC = () => {
     { text: "Hello! How can I assist you today?", sender: "bot" },
   ]);
   const [inputMessage, setInputMessage] = useState("");
-  const { userProfile, balance, getTotalIncome, getTotalExpenses, getNetSavings, getSavingsRate, getSpendingCategories } = useFinance();
+  const { userProfile, balance, getTotalIncome, getTotalExpenses, getNetSavings, getSavingsRate, getSpendingCategories, getMonthlyExpensesData } = useFinance();
   const navigate = useNavigate();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -48,64 +49,57 @@ const Chatbot: React.FC = () => {
   const generateBotResponse = (message: string): string => {
     const lowerCaseMessage = message.toLowerCase();
 
+    // Helper to check if profile is set up
+    const checkProfile = () => {
+      if (!userProfile) {
+        return "Please set up your profile first to get personalized financial information. You can do this on the Profile Setup page.";
+      }
+      return null;
+    };
+
+    const profileCheckResult = checkProfile();
+    if (profileCheckResult) return profileCheckResult;
+
     // --- Personalized Greetings & Basic Info ---
     if (lowerCaseMessage.includes("hello") || lowerCaseMessage.includes("hi")) {
       return `Hello ${userProfile?.name || "there"}! I'm FinAssist Bot. How can I help you manage your money or answer your financial questions today?`;
     } else if (lowerCaseMessage.includes("my name")) {
-      return userProfile?.name ? `Your name is ${userProfile.name}.` : "I don't have your name yet. Please set up your profile!";
+      return `Your name is ${userProfile?.name}.`;
     } else if (lowerCaseMessage.includes("my mobile")) {
-      return userProfile?.mobile ? `Your registered mobile number is ${userProfile.mobile}.` : "I don't have your mobile number. Please set up your profile!";
+      return `Your registered mobile number is ${userProfile?.mobile}.`;
     }
 
     // --- Account Balance & Summary ---
     else if (lowerCaseMessage.includes("current balance") || lowerCaseMessage.includes("my balance") || lowerCaseMessage.includes("how much money do i have")) {
-      if (userProfile) {
-        return `Your current account balance is ₹${balance.toFixed(2)}. Would you like to see your recent transactions or spending analysis?`;
-      }
-      return "Please set up your profile first to check your balance. You can do this on the Profile Setup page.";
+      return `Your current account balance is ₹${balance.toFixed(2)}. Would you like to see your recent transactions or spending analysis?`;
     } else if (lowerCaseMessage.includes("total income")) {
-      if (userProfile) {
-        const totalIncome = getTotalIncome();
-        return `Your total recorded income is ₹${totalIncome.toFixed(2)}. This includes all deposits and incoming transfers.`;
-      }
-      return "Please set up your profile first to track your income.";
+      const totalIncome = getTotalIncome();
+      return `Your total recorded income is ₹${totalIncome.toFixed(2)}. This includes all deposits and incoming transfers. Keep an eye on this to understand your earning potential!`;
     } else if (lowerCaseMessage.includes("total expenses") || lowerCaseMessage.includes("my spending")) {
-      if (userProfile) {
-        const totalExpenses = getTotalExpenses();
-        return `Your total recorded expenses are ₹${totalExpenses.toFixed(2)}. This includes withdrawals and outgoing transfers.`;
-      }
-      return "Please set up your profile first to track your expenses.";
+      const totalExpenses = getTotalExpenses();
+      return `Your total recorded expenses are ₹${totalExpenses.toFixed(2)}. This includes withdrawals and outgoing transfers. Understanding your expenses is the first step to better financial control.`;
     } else if (lowerCaseMessage.includes("net savings")) {
-      if (userProfile) {
-        const netSavings = getNetSavings();
-        return `Your net savings (total income minus total expenses) are ₹${netSavings.toFixed(2)}.`;
-      }
-      return "Please set up your profile first to calculate your net savings.";
+      const netSavings = getNetSavings();
+      return `Your net savings (total income minus total expenses) are ₹${netSavings.toFixed(2)}. This is the money you have left after covering your expenses. A positive number is great!`;
     } else if (lowerCaseMessage.includes("savings rate")) {
-      if (userProfile) {
-        const savingsRate = getSavingsRate();
-        return `Your current savings rate is ${savingsRate.toFixed(2)}%. A higher rate means you're saving more of your income!`;
-      }
-      return "Please set up your profile first to calculate your savings rate.";
+      const savingsRate = getSavingsRate();
+      return `Your current savings rate is ${savingsRate.toFixed(2)}%. This means you're saving ${savingsRate.toFixed(2)}% of your income. Financial experts often recommend aiming for 15-20% or more for long-term goals. How about setting a target to increase it?`;
     }
 
     // --- Spending Analysis ---
     else if (lowerCaseMessage.includes("spending analysis") || lowerCaseMessage.includes("where does my money go") || lowerCaseMessage.includes("spending categories")) {
-      if (userProfile) {
-        const spendingCategories = getSpendingCategories();
-        const totalSpending = Object.values(spendingCategories).reduce((sum, value) => sum + value, 0);
+      const spendingCategories = getSpendingCategories();
+      const totalSpending = Object.values(spendingCategories).reduce((sum, value) => sum + value, 0);
 
-        if (totalSpending === 0) {
-          return "You haven't recorded any spending yet. Make some withdrawals or transfers to see your spending analysis!";
-        }
-
-        const sortedCategories = Object.entries(spendingCategories)
-          .sort(([, a], [, b]) => b - a)
-          .map(([category, amount]) => `${category}: ₹${amount.toFixed(2)}`);
-
-        return `Here's a breakdown of your spending: ${sortedCategories.join(", ")}. Your total spending is ₹${totalSpending.toFixed(2)}. You can find a visual representation on the Dashboard.`;
+      if (totalSpending === 0) {
+        return "You haven't recorded any spending yet. Make some withdrawals or transfers to see your spending analysis!";
       }
-      return "Please set up your profile first to get a personalized spending analysis.";
+
+      const sortedCategories = Object.entries(spendingCategories)
+        .sort(([, a], [, b]) => b - a)
+        .map(([category, amount]) => `${category}: ₹${amount.toFixed(2)}`);
+
+      return `Here's a breakdown of your spending: ${sortedCategories.join(", ")}. Your total spending is ₹${totalSpending.toFixed(2)}. Review these categories to identify areas where you might be able to cut back and save more! You can find a visual representation on the Dashboard.`;
     }
 
     // --- Transactions ---
@@ -126,16 +120,37 @@ const Chatbot: React.FC = () => {
 
     // --- Investments & Analytics ---
     else if (lowerCaseMessage.includes("investments") || lowerCaseMessage.includes("analytics") || lowerCaseMessage.includes("financial insights")) {
-      return "For detailed financial insights, monthly trends, recommended investment allocations, and top investment opportunities, check out the Analytics & Investments page. It's a great place to plan your financial future!";
+      let response = `For detailed financial insights, monthly trends, recommended investment allocations, and top investment opportunities, check out the Analytics & Investments page.`;
+      if (balance > 0) {
+        response += ` With your current balance of ₹${balance.toFixed(2)}, you have a good foundation to start or grow your investments. Consider reviewing the recommended allocations on that page.`;
+      } else {
+        response += ` Building up your balance is a great first step before diving into investments.`;
+      }
+      response += ` I can navigate you there if you like.`;
+      return response;
     }
 
-    // --- General Financial Guidelines ---
+    // --- General Financial Guidelines (with personalization) ---
     else if (lowerCaseMessage.includes("budgeting tips") || lowerCaseMessage.includes("how to budget") || lowerCaseMessage.includes("create a budget")) {
-      return "Budgeting is crucial for financial health! A popular method is the 50/30/20 rule: 50% for Needs, 30% for Wants, and 20% for Savings & Debt Repayment. Start by tracking your income and expenses to understand where your money is going.";
+      const totalIncome = getTotalIncome();
+      const totalExpenses = getTotalExpenses();
+      let response = "Budgeting is crucial for financial health! A popular method is the 50/30/20 rule: 50% for Needs, 30% for Wants, and 20% for Savings & Debt Repayment.";
+      if (totalIncome > 0 || totalExpenses > 0) {
+        response += ` With your current income of ₹${totalIncome.toFixed(2)} and expenses of ₹${totalExpenses.toFixed(2)}, you can start by categorizing your spending to see how you align with this rule.`;
+      }
+      response += " Tracking your income and expenses is the first step to understanding where your money is going.";
+      return response;
     } else if (lowerCaseMessage.includes("save money") || lowerCaseMessage.includes("saving tips") || lowerCaseMessage.includes("how to save")) {
-      return "To save effectively, set clear financial goals (e.g., emergency fund, down payment), automate your savings by setting up recurring transfers, cut unnecessary expenses, and review your subscriptions regularly. Small, consistent savings add up over time!";
+      const savingsRate = getSavingsRate();
+      let response = "To save effectively, set clear financial goals (e.g., emergency fund, down payment), automate your savings by setting up recurring transfers, cut unnecessary expenses, and review your subscriptions regularly.";
+      response += ` Your current savings rate is ${savingsRate.toFixed(2)}%. Consider increasing your automated transfers to boost this rate. Even small, consistent savings add up over time!`;
+      return response;
     } else if (lowerCaseMessage.includes("investing for beginners") || lowerCaseMessage.includes("how to start investing") || lowerCaseMessage.includes("investment advice")) {
-      return "Starting to invest can be exciting! First, ensure you have an emergency fund. Then, understand your risk tolerance. Consider diversified options like low-cost index funds or ETFs. Start small, invest regularly, and continuously educate yourself. The Analytics & Investments page offers some recommendations.";
+      let response = "Starting to invest can be exciting! First, ensure you have an emergency fund. Then, understand your risk tolerance. Consider diversified options like low-cost index funds or ETFs. Start small, invest regularly, and continuously educate yourself.";
+      if (balance > 0) {
+        response += ` With your current balance of ₹${balance.toFixed(2)}, you have capital to begin. The Analytics & Investments page offers some recommendations tailored for Indian markets.`;
+      }
+      return response;
     } else if (lowerCaseMessage.includes("what are stocks") || lowerCaseMessage.includes("stocks explained")) {
       return "Stocks represent ownership shares in a company. When you buy a stock, you own a small piece of that company. Their value can fluctuate based on company performance, industry trends, and overall market conditions.";
     } else if (lowerCaseMessage.includes("what are mutual funds") || lowerCaseMessage.includes("mutual funds explained")) {
@@ -143,9 +158,29 @@ const Chatbot: React.FC = () => {
     } else if (lowerCaseMessage.includes("debt management") || lowerCaseMessage.includes("pay off debt") || lowerCaseMessage.includes("handle debt")) {
       return "Effective debt management involves prioritizing high-interest debts first. Strategies like the debt snowball (pay smallest debt first) or debt avalanche (pay highest interest debt first) can be helpful. Creating a strict budget and avoiding new debt are also key.";
     } else if (lowerCaseMessage.includes("emergency fund")) {
-      return "An emergency fund is a crucial safety net! It's typically 3-6 months' worth of living expenses saved in an easily accessible, separate account. This fund protects you from unexpected events like job loss, medical emergencies, or car repairs without going into debt.";
+      const monthlyExpensesData = getMonthlyExpensesData(3); // Get last 3 months of expense data
+      const averageMonthlyExpenses = monthlyExpensesData.length > 0
+        ? monthlyExpensesData.reduce((sum, month) => sum + month.totalExpenses, 0) / monthlyExpensesData.length
+        : 0;
+
+      let response = "An emergency fund is a crucial safety net! It's typically 3-6 months' worth of living expenses saved in an easily accessible, separate account.";
+      if (averageMonthlyExpenses > 0) {
+        const emergencyFundTargetMin = averageMonthlyExpenses * 3;
+        const emergencyFundTargetMax = averageMonthlyExpenses * 6;
+        response += ` If your average monthly expenses are around ₹${averageMonthlyExpenses.toFixed(2)}, you should aim for an emergency fund of ₹${emergencyFundTargetMin.toFixed(2)} to ₹${emergencyFundTargetMax.toFixed(2)}. Your current balance is ₹${balance.toFixed(2)}. How close are you to this goal?`;
+      } else {
+        response += " Start by tracking your monthly expenses to determine a realistic target for your emergency fund.";
+      }
+      return response;
     } else if (lowerCaseMessage.includes("financial goals")) {
-      return "Setting financial goals is vital. Define short-term (e.g., saving for a gadget), medium-term (e.g., down payment), and long-term goals (e.g., retirement). Make them SMART: Specific, Measurable, Achievable, Relevant, and Time-bound.";
+      const netSavings = getNetSavings();
+      let response = "Setting financial goals is vital. Define short-term (e.g., saving for a gadget), medium-term (e.g., down payment), and long-term goals (e.g., retirement). Make them SMART: Specific, Measurable, Achievable, Relevant, and Time-bound.";
+      if (netSavings > 0) {
+        response += ` Your current net savings are ₹${netSavings.toFixed(2)}, which is a great start towards achieving your goals!`;
+      } else {
+        response += ` Focus on increasing your savings to reach your financial goals faster.`;
+      }
+      return response;
     } else if (lowerCaseMessage.includes("retirement planning")) {
       return "Retirement planning involves setting aside money over many years to ensure financial security in your later life. It often includes contributions to retirement accounts like provident funds, mutual funds, and other long-term investments. Start early and contribute consistently!";
     } else if (lowerCaseMessage.includes("credit score") || lowerCaseMessage.includes("cibil")) {
