@@ -1,5 +1,5 @@
-// Placeholder for AI service integration
-// This file will be expanded when connecting to actual AI services
+// AI service integration for FinAssist
+// This file handles integration with AI services like OpenAI
 
 export interface AIContext {
   userProfile: {
@@ -29,7 +29,11 @@ export class AIService {
   private apiUrl: string = 'https://api.openai.com/v1/chat/completions';
 
   constructor(apiKey?: string) {
-    if (apiKey) {
+    // Check for API key in environment variables first
+    const envApiKey = import.meta.env?.VITE_OPENAI_API_KEY || null;
+    if (envApiKey) {
+      this.apiKey = envApiKey;
+    } else if (apiKey) {
       this.apiKey = apiKey;
     }
   }
@@ -38,25 +42,48 @@ export class AIService {
     this.apiKey = apiKey;
   }
 
+  public isConfigured(): boolean {
+    return !!this.apiKey;
+  }
+
   public async sendMessage(
     message: string,
     context: AIContext,
     conversationHistory: AIChatMessage[] = []
   ): Promise<string> {
-    // This is where we would implement the actual AI service integration
-    // For now, we return a placeholder response
-    
     if (!this.apiKey) {
       return "AI service is not configured. Please set up your API key to enable AI-powered financial advice.";
     }
 
-    // In a real implementation, we would:
-    // 1. Format the context data for the AI
-    // 2. Prepare the conversation history
-    // 3. Make an API call to the AI service
-    // 4. Process and return the response
-    
-    return `This is a placeholder for an AI-generated response to: "${message}". In a future update, this will connect to an AI service to provide personalized financial advice based on your data.`;
+    try {
+      const contextString = this.formatContextForAI(context);
+      const messages = this.prepareMessages(message, contextString, conversationHistory);
+
+      const response = await fetch(this.apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.apiKey}`
+        },
+        body: JSON.stringify({
+          model: "gpt-3.5-turbo",
+          messages: messages,
+          temperature: 0.7,
+          max_tokens: 500
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`AI service error: ${errorData.error?.message || response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data.choices[0].message.content.trim();
+    } catch (error: any) {
+      console.error('AI Service Error:', error);
+      return `Sorry, I encountered an error: ${error.message}. Please try again.`;
+    }
   }
 
   private formatContextForAI(context: AIContext): string {
@@ -85,7 +112,7 @@ export class AIService {
     conversationHistory: AIChatMessage[]
   ): AIChatMessage[] {
     const systemPrompt = `
-      You are FinAssist AI, a financial assistant helping users manage their personal finances.
+      You are FinAssist AI, a financial assistant helping users manage their personal finances in India.
       You have access to the user's financial data including:
       - Current balance
       - Income and expense history
@@ -97,6 +124,9 @@ export class AIService {
       Be concise, helpful, and avoid generic advice.
       When appropriate, suggest specific actions based on their spending patterns.
       If asked about features not available, explain what the app can do.
+      Always respond in the same language the user uses.
+      Format amounts in Indian Rupees (₹).
+      Never provide investment advice that could be risky.
     `;
 
     return [

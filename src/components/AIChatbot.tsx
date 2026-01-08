@@ -1,24 +1,37 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageSquare, Send, X, Bot, User, RotateCcw } from "lucide-react";
+import { MessageSquare, Send, X, Bot, User, RotateCcw, Settings, Key } from "lucide-react";
 import { useAIChat } from "@/hooks/use-ai-chat";
 import { format } from 'date-fns';
+import { aiService } from '@/lib/ai-service';
 
 const AIChatbot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [inputMessage, setInputMessage] = useState("");
+  const [apiKey, setApiKey] = useState("");
+  const [showApiKey, setShowApiKey] = useState(false);
   const { messages, isLoading, sendMessage, clearConversation } = useAIChat();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Scroll to bottom of messages
-  React.useEffect(() => {
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Check if API key is already configured
+  useEffect(() => {
+    const savedApiKey = localStorage.getItem('finassist_ai_api_key');
+    if (savedApiKey) {
+      setApiKey(savedApiKey);
+      aiService.setApiKey(savedApiKey);
+    }
+  }, []);
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,6 +40,21 @@ const AIChatbot: React.FC = () => {
 
     sendMessage(inputMessage);
     setInputMessage("");
+  };
+
+  const handleSaveApiKey = () => {
+    if (apiKey.trim()) {
+      localStorage.setItem('finassist_ai_api_key', apiKey);
+      aiService.setApiKey(apiKey);
+      setShowSettings(false);
+    }
+  };
+
+  const handleClearApiKey = () => {
+    localStorage.removeItem('finassist_ai_api_key');
+    setApiKey("");
+    aiService.setApiKey("");
+    setShowSettings(false);
   };
 
   return (
@@ -43,7 +71,7 @@ const AIChatbot: React.FC = () => {
         </Button>
       )}
 
-      {isOpen && (
+      {isOpen && !showSettings && (
         <Card className="fixed bottom-4 right-4 w-96 h-[550px] flex flex-col shadow-2xl z-50 border-0 bg-gradient-to-b from-background to-muted">
           <CardHeader className="flex flex-row items-center justify-between p-4 border-b bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-t-lg">
             <div className="flex items-center space-x-2">
@@ -51,6 +79,15 @@ const AIChatbot: React.FC = () => {
               <CardTitle className="text-lg">FinAssist AI</CardTitle>
             </div>
             <div className="flex space-x-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowSettings(true)}
+                className="h-8 w-8 text-white hover:bg-white/20"
+                title="Settings"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
               <Button
                 variant="ghost"
                 size="icon"
@@ -137,6 +174,82 @@ const AIChatbot: React.FC = () => {
               </Button>
             </form>
           </CardFooter>
+        </Card>
+      )}
+
+      {isOpen && showSettings && (
+        <Card className="fixed bottom-4 right-4 w-96 h-[300px] flex flex-col shadow-2xl z-50 border-0 bg-gradient-to-b from-background to-muted">
+          <CardHeader className="flex flex-row items-center justify-between p-4 border-b bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-t-lg">
+            <div className="flex items-center space-x-2">
+              <Settings className="h-5 w-5" />
+              <CardTitle className="text-lg">AI Settings</CardTitle>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowSettings(false)}
+              className="h-8 w-8 text-white hover:bg-white/20"
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close Settings</span>
+            </Button>
+          </CardHeader>
+          
+          <CardContent className="flex-grow p-4">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">OpenAI API Key</label>
+                <div className="relative">
+                  <Input
+                    type={showApiKey ? "text" : "password"}
+                    placeholder="Enter your OpenAI API key"
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    className="pr-10"
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowApiKey(!showApiKey)}
+                  >
+                    {showApiKey ? (
+                      <span className="text-xs">HIDE</span>
+                    ) : (
+                      <span className="text-xs">SHOW</span>
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Your API key is stored locally and never sent to any server except OpenAI.
+                </p>
+              </div>
+              
+              <div className="flex space-x-2">
+                <Button 
+                  onClick={handleSaveApiKey}
+                  className="flex-1"
+                  disabled={!apiKey.trim()}
+                >
+                  Save Key
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={handleClearApiKey}
+                  disabled={!apiKey}
+                >
+                  Clear
+                </Button>
+              </div>
+              
+              {!aiService.isConfigured() && (
+                <div className="p-3 bg-yellow-100 text-yellow-800 rounded-md text-sm">
+                  <p className="font-medium">AI Service Not Configured</p>
+                  <p>Enter your OpenAI API key to enable AI-powered financial advice.</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
         </Card>
       )}
     </>

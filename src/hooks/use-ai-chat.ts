@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { aiService, AIContext, AIChatMessage } from '@/lib/ai-service';
 import { useFinance } from '@/context/FinanceContext';
 
@@ -19,8 +19,14 @@ export const useAIChat = () => {
     }
   ]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isConfigured, setIsConfigured] = useState(false);
   const financeContext = useFinance();
   const conversationHistory = useRef<AIChatMessage[]>([]);
+
+  // Check if AI service is configured
+  useEffect(() => {
+    setIsConfigured(aiService.isConfigured());
+  }, []);
 
   const extractAIContext = useCallback((): AIContext => {
     const {
@@ -85,10 +91,10 @@ export const useAIChat = () => {
       };
 
       setMessages(prev => [...prev, botMessage]);
-    } catch (error) {
+    } catch (error: any) {
       const errorMessage: ChatMessage = {
         id: (Date.now() + 2).toString(),
-        text: 'Sorry, I encountered an error. Please try again.',
+        text: `Sorry, I encountered an error: ${error.message}. Please try again.`,
         sender: 'bot',
         timestamp: new Date()
       };
@@ -113,6 +119,7 @@ export const useAIChat = () => {
   return {
     messages,
     isLoading,
+    isConfigured,
     sendMessage,
     clearConversation
   };
