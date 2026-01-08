@@ -1,5 +1,5 @@
 // AI service integration for FinAssist
-// This file handles integration with AI services like OpenAI
+// This file handles integration with Google's Gemini API
 
 export interface AIContext {
   userProfile: {
@@ -20,17 +20,19 @@ export interface AIContext {
 }
 
 export interface AIChatMessage {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
+  role: 'user' | 'model';
+  parts: Array<{
+    text: string;
+  }>;
 }
 
 export class AIService {
   private apiKey: string | null = null;
-  private apiUrl: string = 'https://api.openai.com/v1/chat/completions';
+  private apiUrl: string = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
 
   constructor(apiKey?: string) {
     // Check for API key in environment variables first
-    const envApiKey = import.meta.env?.VITE_OPENAI_API_KEY || null;
+    const envApiKey = import.meta.env?.VITE_GEMINI_API_KEY || null;
     if (envApiKey) {
       this.apiKey = envApiKey;
     } else if (apiKey) {
@@ -52,34 +54,30 @@ export class AIService {
     conversationHistory: AIChatMessage[] = []
   ): Promise<string> {
     if (!this.apiKey) {
-      return "AI service is not configured. Please set up your API key to enable AI-powered financial advice.";
+      return "AI service is not configured. Please set up your Gemini API key to enable AI-powered financial advice.";
     }
 
     try {
       const contextString = this.formatContextForAI(context);
       const messages = this.prepareMessages(message, contextString, conversationHistory);
 
-      const response = await fetch(this.apiUrl, {
+      const response = await fetch(`${this.apiUrl}?key=${this.apiKey}`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: "gpt-3.5-turbo",
-          messages: messages,
-          temperature: 0.7,
-          max_tokens: 500
+          contents: messages
         })
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(`AI service error: ${errorData.error?.message || response.statusText}`);
+        throw new Error(`Gemini API error: ${errorData.error?.message || response.statusText}`);
       }
 
       const data = await response.json();
-      return data.choices[0].message.content.trim();
+      return data.candidates[0].content.parts[0].text.trim();
     } catch (error: any) {
       console.error('AI Service Error:', error);
       return `Sorry, I encountered an error: ${error.message}. Please try again.`;
@@ -110,7 +108,7 @@ export class AIService {
     message: string,
     context: string,
     conversationHistory: AIChatMessage[]
-  ): AIChatMessage[] {
+  ): any[] {
     const systemPrompt = `
       You are FinAssist AI, a financial assistant helping users manage their personal finances in India.
       You have access to the user's financial data including:
@@ -129,12 +127,17 @@ export class AIService {
       Never provide investment advice that could be risky.
     `;
 
-    return [
-      { role: 'system', content: systemPrompt },
-      { role: 'system', content: `User's financial context:\n${context}` },
-      ...conversationHistory,
-      { role: 'user', content: message }
+    // Format messages for Gemini API
+    const formattedMessages = [
+      {
+        role: "user",
+        parts: [{
+          text: `${systemPrompt}\n\nUser's financial context:\n${context}\n\nUser's message: ${message}`
+        }]
+      }
     ];
+
+    return formattedMessages;
   }
 }
 

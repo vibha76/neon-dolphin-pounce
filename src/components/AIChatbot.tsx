@@ -198,11 +198,11 @@ const AIChatbot: React.FC = () => {
           <CardContent className="flex-grow p-4">
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">OpenAI API Key</label>
+                <label className="text-sm font-medium">Gemini API Key</label>
                 <div className="relative">
                   <Input
                     type={showApiKey ? "text" : "password"}
-                    placeholder="Enter your OpenAI API key"
+                    placeholder="Enter your Gemini API key"
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
                     className="pr-10"
@@ -221,7 +221,7 @@ const AIChatbot: React.FC = () => {
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Your API key is stored locally and never sent to any server except OpenAI.
+                  Your API key is stored locally and never sent to any server except Google's Gemini API.
                 </p>
               </div>
               
@@ -245,7 +245,7 @@ const AIChatbot: React.FC = () => {
               {!aiService.isConfigured() && (
                 <div className="p-3 bg-yellow-100 text-yellow-800 rounded-md text-sm">
                   <p className="font-medium">AI Service Not Configured</p>
-                  <p>Enter your OpenAI API key to enable AI-powered financial advice.</p>
+                  <p>Enter your Gemini API key to enable AI-powered financial advice.</p>
                 </div>
               )}
             </div>
