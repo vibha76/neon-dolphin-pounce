@@ -23,20 +23,8 @@ export const useAIChat = () => {
   const conversationHistory = useRef<AIChatMessage[]>([]);
 
   const extractAIContext = useCallback((): AIContext => {
-    const {
-      balance,
-      transactions,
-      userProfile,
-      getSpendingCategories,
-      getMonthlyExpensesData,
-      getMonthlyIncomeData,
-      getTotalIncome,
-      getTotalExpenses,
-      getNetSavings,
-      getSavingsRate,
-      getRecentTransactions
-    } = financeContext;
-
+    const { balance, transactions, userProfile, getSpendingCategories, getMonthlyExpensesData, getMonthlyIncomeData, getTotalIncome, getTotalExpenses, getNetSavings, getSavingsRate, getRecentTransactions } = financeContext;
+    
     return {
       userProfile,
       balance,
@@ -61,7 +49,7 @@ export const useAIChat = () => {
       sender: 'user',
       timestamp: new Date()
     };
-
+    
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
 
@@ -83,7 +71,7 @@ export const useAIChat = () => {
         sender: 'bot',
         timestamp: new Date()
       };
-
+      
       setMessages(prev => [...prev, botMessage]);
     } catch (error: any) {
       const errorMessage: ChatMessage = {
@@ -92,6 +80,7 @@ export const useAIChat = () => {
         sender: 'bot',
         timestamp: new Date()
       };
+      
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
