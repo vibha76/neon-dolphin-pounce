@@ -74,13 +74,13 @@ const Chatbot: React.FC = () => {
     // --- Account Balance & Summary ---
     else if (lowerCaseMessage.includes("current balance") || lowerCaseMessage.includes("my balance") || lowerCaseMessage.includes("how much money do i have") || lowerCaseMessage.includes("account balance")) {
       return `Your current account balance is ₹${balance.toFixed(2)}. Would you like to see your recent transactions or a breakdown of your spending?`;
-    } else if (lowerCaseMessage.includes("total income") || lowerCaseMessage.includes("earnings")) {
+    } else if (lowerCaseMessage.includes("total income") || lowerCaseMessage.includes("earnings") || lowerCaseMessage.includes("how much i earned")) {
       const totalIncome = getTotalIncome();
       return `Your total recorded income is ₹${totalIncome.toFixed(2)}. This includes all deposits and incoming transfers. Understanding your income helps in planning your budget!`;
-    } else if (lowerCaseMessage.includes("total expenses") || lowerCaseMessage.includes("my spending") || lowerCaseMessage.includes("expenditure")) {
+    } else if (lowerCaseMessage.includes("total expenses") || lowerCaseMessage.includes("my spending") || lowerCaseMessage.includes("expenditure") || lowerCaseMessage.includes("how much i spent")) {
       const totalExpenses = getTotalExpenses();
       return `Your total recorded expenses are ₹${totalExpenses.toFixed(2)}. This includes withdrawals and outgoing transfers. Knowing your expenses is key to finding saving opportunities.`;
-    } else if (lowerCaseMessage.includes("net savings") || lowerCaseMessage.includes("how much i saved")) {
+    } else if (lowerCaseMessage.includes("net savings") || lowerCaseMessage.includes("how much i saved") || lowerCaseMessage.includes("my savings")) {
       const netSavings = getNetSavings();
       if (netSavings >= 0) {
         return `Your net savings (total income minus total expenses) are ₹${netSavings.toFixed(2)}. This is the money you have left after covering your expenses. Great job saving!`;
@@ -101,7 +101,7 @@ const Chatbot: React.FC = () => {
     }
 
     // --- Spending Analysis ---
-    else if (lowerCaseMessage.includes("spending analysis") || lowerCaseMessage.includes("where does my money go") || lowerCaseMessage.includes("spending categories") || lowerCaseMessage.includes("expense breakdown")) {
+    else if (lowerCaseMessage.includes("spending analysis") || lowerCaseMessage.includes("where does my money go") || lowerCaseMessage.includes("spending categories") || lowerCaseMessage.includes("expense breakdown") || lowerCaseMessage.includes("my expenses by category")) {
       const spendingCategories = getSpendingCategories();
       const totalSpending = Object.values(spendingCategories).reduce((sum, value) => sum + value, 0);
 
@@ -117,23 +117,23 @@ const Chatbot: React.FC = () => {
     }
 
     // --- Transactions ---
-    else if (lowerCaseMessage.includes("transactions") || lowerCaseMessage.includes("transaction history") || lowerCaseMessage.includes("recent activity") || lowerCaseMessage.includes("money movement")) {
+    else if (lowerCaseMessage.includes("transactions") || lowerCaseMessage.includes("transaction history") || lowerCaseMessage.includes("recent activity") || lowerCaseMessage.includes("money movement") || lowerCaseMessage.includes("view transactions")) {
       return "To view your complete transaction history or make new deposits, withdrawals, or transfers, please visit the Transactions page. I can navigate you there if you like.";
-    } else if (lowerCaseMessage.includes("deposit money") || lowerCaseMessage.includes("add funds")) {
+    } else if (lowerCaseMessage.includes("deposit money") || lowerCaseMessage.includes("add funds") || lowerCaseMessage.includes("make a deposit")) {
       return "You can deposit funds into your account from the Transactions page. Just specify the amount and a description. It's a great way to increase your balance!";
-    } else if (lowerCaseMessage.includes("withdraw money") || lowerCaseMessage.includes("take out money")) {
+    } else if (lowerCaseMessage.includes("withdraw money") || lowerCaseMessage.includes("take out money") || lowerCaseMessage.includes("make a withdrawal")) {
       return "To withdraw money, go to the Transactions page, enter the amount, and a description. Remember to maintain sufficient balance for your needs!";
-    } else if (lowerCaseMessage.includes("transfer money") || lowerCaseMessage.includes("send money")) {
+    } else if (lowerCaseMessage.includes("transfer money") || lowerCaseMessage.includes("send money") || lowerCaseMessage.includes("make a transfer")) {
       return "You can transfer funds to other registered users from the Transactions page. You'll need their mobile number and the amount. It's a quick way to send money to friends or family!";
     }
 
     // --- Loan Assessment ---
-    else if (lowerCaseMessage.includes("loan") || lowerCaseMessage.includes("loan eligibility") || lowerCaseMessage.includes("fraud detection") || lowerCaseMessage.includes("borrow money")) {
+    else if (lowerCaseMessage.includes("loan") || lowerCaseMessage.includes("loan eligibility") || lowerCaseMessage.includes("fraud detection") || lowerCaseMessage.includes("borrow money") || lowerCaseMessage.includes("apply for loan")) {
       return "If you need to assess loan eligibility or detect potential fraud, head over to the Loan Assessment page. There, you can input various details to get an assessment. Understanding your loan options is important!";
     }
 
     // --- Investments & Analytics ---
-    else if (lowerCaseMessage.includes("investments") || lowerCaseMessage.includes("analytics") || lowerCaseMessage.includes("financial insights") || lowerCaseMessage.includes("grow my money") || lowerCaseMessage.includes("investment options") || lowerCaseMessage.includes("where to invest") || lowerCaseMessage.includes("how to invest")) {
+    else if (lowerCaseMessage.includes("investments") || lowerCaseMessage.includes("analytics") || lowerCaseMessage.includes("financial insights") || lowerCaseMessage.includes("grow my money") || lowerCaseMessage.includes("investment options") || lowerCaseMessage.includes("where to invest") || lowerCaseMessage.includes("how to invest") || lowerCaseMessage.includes("investment advice") || lowerCaseMessage.includes("portfolio")) {
       const monthlyExpensesData = getMonthlyExpensesData(3);
       const averageMonthlyExpenses = monthlyExpensesData.length > 0
         ? monthlyExpensesData.reduce((sum, month) => sum + month.totalExpenses, 0) / monthlyExpensesData.length
@@ -159,8 +159,22 @@ const Chatbot: React.FC = () => {
       return response;
     }
 
-    // --- Saving & Emergency Fund ---
-    else if (lowerCaseMessage.includes("save money") || lowerCaseMessage.includes("saving tips") || lowerCaseMessage.includes("how to save") || lowerCaseMessage.includes("increase savings") || lowerCaseMessage.includes("emergency fund")) {
+    // --- General Financial Planning & Goals ---
+    else if (lowerCaseMessage.includes("budgeting tips") || lowerCaseMessage.includes("how to budget") || lowerCaseMessage.includes("create a budget") || lowerCaseMessage.includes("manage my money") || lowerCaseMessage.includes("financial planning") || lowerCaseMessage.includes("wealth management") || lowerCaseMessage.includes("financial advice")) {
+      const totalIncome = getTotalIncome();
+      const totalExpenses = getTotalExpenses();
+      let response = "Budgeting is crucial for financial health! A popular method is the 50/30/20 rule: 50% for Needs, 30% for Wants, and 20% for Savings & Debt Repayment.";
+      if (totalIncome > 0 && totalExpenses > 0) {
+        response += ` With your current income of ₹${totalIncome.toFixed(2)} and expenses of ₹${totalExpenses.toFixed(2)}, you can start by categorizing your spending to see how you align with this rule.`;
+        if (totalExpenses > totalIncome * 0.8) { // If expenses are high
+          response += " It seems your expenses are quite high relative to your income. Let's identify areas in your spending analysis where you can cut back.";
+        }
+      } else {
+        response += " Tracking your income and expenses is the first step to understanding where your money is going. Start by recording all your transactions!";
+      }
+      response += "\n\nFor more detailed financial planning and insights, I recommend visiting the Analytics & Investments page.";
+      return response;
+    } else if (lowerCaseMessage.includes("save money") || lowerCaseMessage.includes("saving tips") || lowerCaseMessage.includes("how to save") || lowerCaseMessage.includes("increase savings")) {
       const savingsRate = getSavingsRate();
       const monthlyExpensesData = getMonthlyExpensesData(3);
       const averageMonthlyExpenses = monthlyExpensesData.length > 0
@@ -213,7 +227,7 @@ const Chatbot: React.FC = () => {
         response += " Given your current expenses exceeding income, focusing on debt reduction and avoiding new debt is critical. Review your spending to free up funds for repayments.";
       }
       return response;
-    } else if (lowerCaseMessage.includes("financial goals") || lowerCaseMessage.includes("set goals")) {
+    } else if (lowerCaseMessage.includes("financial goals") || lowerCaseMessage.includes("set goals") || lowerCaseMessage.includes("my goals")) {
       const netSavings = getNetSavings();
       let response = "Setting financial goals is vital. Define short-term (e.g., saving for a gadget), medium-term (e.g., down payment), and long-term goals (e.g., retirement). Make them SMART: Specific, Measurable, Achievable, Relevant, and Time-bound.";
       if (netSavings > 0) {
@@ -221,6 +235,7 @@ const Chatbot: React.FC = () => {
       } else {
         response += ` Focus on increasing your savings to reach your financial goals faster. Review your budget to find extra funds.`;
       }
+      response += "\n\nFor more insights on financial planning and goal setting, check out the Analytics & Investments page.";
       return response;
     } else if (lowerCaseMessage.includes("retirement planning") || lowerCaseMessage.includes("plan for retirement")) {
       return "Retirement planning involves setting aside money over many years to ensure financial security in your later life. It often includes contributions to retirement accounts like provident funds, mutual funds, and other long-term investments. Start early and contribute consistently to benefit from compounding!";
@@ -253,9 +268,9 @@ const Chatbot: React.FC = () => {
       return "Taking you to the Profile Setup page to get started!";
     }
 
-    // --- Fallback / Unrecognized Query ---
+    // --- Improved Fallback / Unrecognized Query ---
     else {
-      return "I'm still learning, but I can help with questions about your balance, transactions, loans, investments, budgeting, saving, debt, and financial goals. You can also ask me to 'navigate to dashboard' or other pages. What else can I assist you with?";
+      return "I'm not sure how to answer that specific question, but I can help with common financial topics like your balance, transactions, loans, investments, budgeting, saving, debt, and financial goals. You can also ask me to 'navigate to dashboard' or other pages. Please try rephrasing your question or ask about one of these topics!";
     }
   };
 
