@@ -4,7 +4,7 @@ import React, { createContext, useState, useContext, useEffect, ReactNode } from
 import { showSuccess, showError } from "@/utils/toast";
 import { format, parseISO, startOfMonth, isSameMonth, subMonths } from 'date-fns';
 
-interface Transaction {
+export interface Transaction { // Added export keyword here
   id: string;
   type: "deposit" | "withdraw" | "transfer_out" | "transfer_in";
   amount: number;
@@ -380,13 +380,10 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
       const monthKey = format(startOfMonth(date), 'MMM yyyy');
       const existingEntry = data.find(entry => entry.name === monthKey);
       if (!existingEntry) {
-        const balanceForMonth = monthlyBalances[monthKey];
-        if (balanceForMonth !== undefined) {
-          data.push({ name: monthKey, balance: balanceForMonth });
-        } else {
-          const lastKnownBalance = data.length > 0 ? data[data.length - 1].balance : 0;
-          data.push({ name: monthKey, balance: lastKnownBalance });
-        }
+        const lastKnownBalance = data.length > 0 ? data[data.length - 1].balance : 0;
+        data.push({ name: monthKey, balance: balanceForMonth !== undefined ? balanceForMonth : lastKnownBalance });
+        // If balanceForMonth is undefined, use the last known balance.
+        // This ensures the chart has a continuous line even if there are gaps in snapshots.
       }
     }
     return data.sort((a, b) => parseISO(a.name).getTime() - parseISO(b.name).getTime());

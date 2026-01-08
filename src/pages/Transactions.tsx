@@ -11,6 +11,7 @@ import { showError } from "@/utils/toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { ArrowDown, ArrowUp, Repeat } from "lucide-react";
+import { Transaction } from "@/context/FinanceContext"; // Import Transaction type
 
 const Transactions: React.FC = () => {
   const { balance, transactions, deposit, withdraw, transfer, userProfile, registeredUsers } = useFinance();

@@ -2,11 +2,11 @@
 
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { MadeWithDyad } from "@/components/made-with-dyad";
 import { Button } from "@/components/ui/button";
-import { Home, User, Landmark, PiggyBank, Handshake, LogOut, BarChart2 } from "lucide-react"; // Added BarChart2 icon
+import { Home, User, Landmark, PiggyBank, Handshake, LogOut, BarChart2 } from "lucide-react";
 import { useFinance } from "@/context/FinanceContext";
 import { ThemeToggle } from "./ThemeToggle";
+import Chatbot from "./Chatbot"; // Import the new Chatbot component
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -36,7 +36,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </Link>
             </Button>
             <Button variant="ghost" asChild>
-              <Link to="/analytics-investments"> {/* New navigation link */}
+              <Link to="/analytics-investments">
                 <BarChart2 className="mr-2 h-4 w-4" /> Analytics & Investments
               </Link>
             </Button>
@@ -64,8 +64,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </header>
       <main className="flex-grow container py-8">{children}</main>
       <footer className="border-t bg-background">
-        <MadeWithDyad />
+        {/* The MadeWithDyad component was removed from the codebase. */}
       </footer>
+      <Chatbot /> {/* Add the Chatbot component here */}
     </div>
   );
 };

@@ -8,6 +8,7 @@ import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp, TrendingDown } from "
 import { Progress } from "@/components/ui/progress";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { format } from 'date-fns';
+import { Button } from "@/components/ui/button"; // Import Button
 
 // Placeholder for new components
 const FinancialSummaryCard: React.FC = () => {
