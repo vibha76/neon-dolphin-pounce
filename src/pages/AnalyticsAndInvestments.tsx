@@ -72,18 +72,19 @@ const MonthlyTrendsChart: React.FC = () => {
   const incomeData = getMonthlyIncomeData(6);
   const expensesData = getMonthlyExpensesData(6);
 
-  // Correctly calculate combined data with savings
+  // Combine income and expense data for the chart
   const combinedData = incomeData.map((incomeMonth) => {
     const expenseMonth = expensesData.find(exp => exp.name === incomeMonth.name);
     const totalIncome = incomeMonth.totalIncome;
     const totalExpenses = expenseMonth?.totalExpenses || 0;
-    const savings = totalIncome - totalExpenses; // Correct savings calculation
-
+    // Savings is the difference between income and expenses
+    const savings = Math.max(0, totalIncome - totalExpenses); // Ensure non-negative
+    
     return {
       name: incomeMonth.name,
-      totalIncome,
-      totalExpenses,
-      savings, // This will now correctly reflect Income - Expenses
+      income: totalIncome,
+      expenses: totalExpenses,
+      savings: savings,
     };
   });
 
@@ -91,10 +92,10 @@ const MonthlyTrendsChart: React.FC = () => {
     <Card className="lg:col-span-3">
       <CardHeader>
         <CardTitle>Monthly Trends</CardTitle>
-        <CardDescription>Income vs Expenses over last 6 months</CardDescription>
+        <CardDescription>Income, Expenses, and Savings over last 6 months</CardDescription>
       </CardHeader>
       <CardContent>
-        {combinedData.some(item => item.totalIncome > 0 || item.totalExpenses > 0) ? (
+        {combinedData.some(item => item.income > 0 || item.expenses > 0) ? (
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
@@ -109,11 +110,14 @@ const MonthlyTrendsChart: React.FC = () => {
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis dataKey="name" className="text-sm" />
                 <YAxis tickFormatter={(value) => `₹${value}`} className="text-sm" />
-                <Tooltip formatter={(value: number, name: string) => [`₹${value.toFixed(2)}`, name === 'totalIncome' ? 'Income' : name === 'totalExpenses' ? 'Expenses' : 'Savings']} />
+                <Tooltip 
+                  formatter={(value: number, name: string) => [`₹${value.toFixed(2)}`, name.charAt(0).toUpperCase() + name.slice(1)]} 
+                  labelFormatter={(value) => `Month: ${value}`}
+                />
                 <Legend />
-                <Bar dataKey="totalIncome" name="Income" fill="#82ca9d" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="totalExpenses" name="Expenses" fill="#fa8072" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="savings" name="Savings" fill="#8884d8" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="income" name="Income" stackId="a" fill="#82ca9d" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="expenses" name="Expenses" stackId="a" fill="#fa8072" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="savings" name="Savings" stackId="a" fill="#8884d8" radius={[0, 0, 4, 4]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
