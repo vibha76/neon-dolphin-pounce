@@ -133,14 +133,20 @@ const Chatbot: React.FC = () => {
     }
 
     // --- Investments & Analytics ---
-    else if (lowerCaseMessage.includes("investments") || lowerCaseMessage.includes("analytics") || lowerCaseMessage.includes("financial insights") || lowerCaseMessage.includes("grow my money") || lowerCaseMessage.includes("investment options")) {
+    else if (lowerCaseMessage.includes("investments") || lowerCaseMessage.includes("analytics") || lowerCaseMessage.includes("financial insights") || lowerCaseMessage.includes("grow my money") || lowerCaseMessage.includes("investment options") || lowerCaseMessage.includes("where to invest")) {
       let response = `For detailed financial insights, monthly trends, recommended investment allocations, and top investment opportunities, check out the Analytics & Investments page.`;
-      if (balance > 10000) { // Suggest investment if balance is substantial
-        response += ` With your current balance of ₹${balance.toFixed(2)}, you have a good foundation to start or grow your investments. Consider reviewing the recommended allocations on that page to diversify your portfolio.`;
+      
+      if (balance > 10000) {
+        response += ` With your current balance of ₹${balance.toFixed(2)}, you have a good foundation to start or grow your investments. Here's a general guide on different investment types:\n\n`;
+        response += `1. **Emergency Fund**: Before investing, ensure you have 3-6 months of living expenses saved. Your current balance is ₹${balance.toFixed(2)}. (Risk: Very Low, Returns: 5-7% p.a., Time: Short-term, Liquid)\n`;
+        response += `2. **Equity Mutual Funds (SIPs)**: Good for long-term wealth creation. (Risk: Moderate, Returns: 10-14% p.a., Time: 3-7+ years). You could consider allocating around 40% of your investable surplus to this, which is approximately ₹${(balance * 0.4).toFixed(2)}.\n`;
+        response += `3. **Blue-chip Equity Stocks**: Direct investment in stable companies. (Risk: Moderate to High, Returns: 10-18% p.a., Time: 5+ years). A smaller portion, say 20%, or ₹${(balance * 0.2).toFixed(2)}, could be considered if you have higher risk tolerance.\n`;
+        response += `4. **Debt Mutual Funds/Government Bonds**: Lower risk, stable returns. (Risk: Low, Returns: 7-9% p.a., Time: 1-5 years). About 20% or ₹${(balance * 0.2).toFixed(2)} could be allocated here for stability.\n`;
+        response += `5. **Gold**: Acts as a hedge against inflation. (Risk: Low to Moderate, Returns: 8-10% p.a., Time: 3-5+ years). A small allocation of 10% or ₹${(balance * 0.1).toFixed(2)} is often recommended.\n\n`;
+        response += `Remember to diversify and align investments with your risk tolerance and financial goals. I can navigate you to the Analytics & Investments page for more visual insights.`;
       } else if (balance > 0) {
-        response += ` Building up your balance (currently ₹${balance.toFixed(2)}) is a great first step before diving into investments. Focus on your emergency fund first!`;
+        response += ` Building up your balance (currently ₹${balance.toFixed(2)}) is a great first step before diving into significant investments. Focus on building an emergency fund first.`;
       }
-      response += ` I can navigate you there if you like.`;
       return response;
     }
 
@@ -160,24 +166,31 @@ const Chatbot: React.FC = () => {
       return response;
     } else if (lowerCaseMessage.includes("save money") || lowerCaseMessage.includes("saving tips") || lowerCaseMessage.includes("how to save") || lowerCaseMessage.includes("increase savings")) {
       const savingsRate = getSavingsRate();
+      const monthlyExpensesData = getMonthlyExpensesData(3);
+      const averageMonthlyExpenses = monthlyExpensesData.length > 0
+        ? monthlyExpensesData.reduce((sum, month) => sum + month.totalExpenses, 0) / monthlyExpensesData.length
+        : 0;
+
       let response = "To save effectively, set clear financial goals (e.g., emergency fund, down payment), automate your savings by setting up recurring transfers, cut unnecessary expenses, and review your subscriptions regularly.";
       response += ` Your current savings rate is ${savingsRate.toFixed(2)}%.`;
+      if (averageMonthlyExpenses > 0) {
+        const emergencyFundTargetMin = averageMonthlyExpenses * 3;
+        const emergencyFundTargetMax = averageMonthlyExpenses * 6;
+        response += ` Based on your average monthly expenses of ₹${averageMonthlyExpenses.toFixed(2)}, a 3-6 month emergency fund would be between ₹${emergencyFundTargetMin.toFixed(2)} and ₹${emergencyFundTargetMax.toFixed(2)}. Your current balance is ₹${balance.toFixed(2)}.`;
+        if (balance < emergencyFundTargetMin) {
+          response += " You're currently below your recommended emergency fund target. Prioritize building this fund before other investments. Aim to save at least 15-20% of your income consistently.";
+        } else if (balance >= emergencyFundTargetMax) {
+          response += " You have a solid emergency fund! Now you can confidently explore other investment opportunities.";
+        }
+      } else {
+        response += " Start by tracking your monthly expenses to determine a realistic target for your emergency fund. Once you have some transaction history, I can help you calculate a target.";
+      }
       if (savingsRate < 15 && savingsRate >= 0) {
         response += " Consider increasing your automated transfers or finding areas to reduce spending to boost this rate. Even small, consistent savings add up over time!";
       } else if (savingsRate < 0) {
         response += " Currently, your spending exceeds your income. Focusing on reducing expenses is the first step to start saving.";
       } else {
         response += " That's a great savings rate! Keep it up and consider reviewing your investment options to make your savings work harder.";
-      }
-      return response;
-    } else if (lowerCaseMessage.includes("investing for beginners") || lowerCaseMessage.includes("how to start investing") || lowerCaseMessage.includes("investment advice") || lowerCaseMessage.includes("where to invest")) {
-      let response = "Starting to invest can be exciting! First, ensure you have an emergency fund. Then, understand your risk tolerance. Consider diversified options like low-cost index funds or ETFs. Start small, invest regularly, and continuously educate yourself.";
-      if (balance > 50000) { // More specific advice for higher balance
-        response += ` With your current balance of ₹${balance.toFixed(2)}, you have significant capital to begin. The Analytics & Investments page offers some recommendations tailored for Indian markets, including options like Nifty 50 Index Funds (Moderate Risk, 12-15% p.a. returns) or Government Bonds (Low Risk, 7-8% p.a. returns). Remember, investments typically require a long-term horizon (5+ years) for significant growth.`;
-      } else if (balance > 10000) {
-        response += ` With ₹${balance.toFixed(2)}, you have a good starting point. Focus on consistent, small investments, perhaps through SIPs in diversified mutual funds (Moderate Risk, 10-14% p.a. returns). Aim for a medium-term horizon (3-5 years).`;
-      } else {
-        response += ` Building up your balance (currently ₹${balance.toFixed(2)}) and establishing an emergency fund should be your priority before significant investments. Once you have at least ₹10,000 saved, we can explore low-risk options.`;
       }
       return response;
     } else if (lowerCaseMessage.includes("what are stocks") || lowerCaseMessage.includes("stocks explained") || lowerCaseMessage.includes("equity")) {
