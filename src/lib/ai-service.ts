@@ -28,7 +28,7 @@ export interface AIChatMessage {
 
 export class AIService {
   private apiKey: string = "AIzaSyB6D6kENFR3WR9TochtUVPp211wlWAlnBQ"; // Predefined API key
-  private apiUrl: string = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+  private apiUrl: string = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 
   constructor() {
     // Check for API key in environment variables (for development override)
@@ -67,6 +67,12 @@ export class AIService {
       }
 
       const data = await response.json();
+      
+      // Check if response has content
+      if (!data.candidates || data.candidates.length === 0 || !data.candidates[0].content) {
+        throw new Error("No content in response from Gemini API");
+      }
+      
       return data.candidates[0].content.parts[0].text.trim();
     } catch (error: any) {
       console.error('AI Service Error:', error);
