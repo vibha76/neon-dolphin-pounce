@@ -1,5 +1,5 @@
 // AI service integration for FinAssist
-// This file handles integration with Google's Gemini API using a predefined API key
+// This file handles integration with OpenRouter API using a predefined API key
 
 export interface AIContext {
   userProfile: {
@@ -27,12 +27,12 @@ export interface AIChatMessage {
 }
 
 export class AIService {
-  private apiKey: string = "AIzaSyB6D6kENFR3WR9TochtUVPp211wlWAlnBQ"; // Predefined API key
-  private apiUrl: string = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+  private apiKey: string = "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"; // Predefined API key
+  private apiUrl: string = 'https://openrouter.ai/api/v1/chat/completions';
 
   constructor() {
     // Check for API key in environment variables (for development override)
-    const envApiKey = import.meta.env?.VITE_GEMINI_API_KEY || null;
+    const envApiKey = import.meta.env?.VITE_OPENROUTER_API_KEY || null;
     if (envApiKey) {
       this.apiKey = envApiKey;
     }
@@ -51,29 +51,33 @@ export class AIService {
       const contextString = this.formatContextForAI(context);
       const messages = this.prepareMessages(message, contextString, conversationHistory);
 
-      const response = await fetch(`${this.apiUrl}?key=${this.apiKey}`, {
+      const response = await fetch(this.apiUrl, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': window.location.origin,
+          'X-Title': 'FinAssist'
         },
         body: JSON.stringify({
-          contents: messages
+          model: "google/gemini-flash-1.5",
+          messages: messages
         })
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(`Gemini API error: ${errorData.error?.message || response.statusText}`);
+        throw new Error(`OpenRouter API error: ${errorData.error?.message || response.statusText}`);
       }
 
       const data = await response.json();
       
       // Check if response has content
-      if (!data.candidates || data.candidates.length === 0 || !data.candidates[0].content) {
-        throw new Error("No content in response from Gemini API");
+      if (!data.choices || data.choices.length === 0 || !data.choices[0].message) {
+        throw new Error("No content in response from OpenRouter API");
       }
       
-      return data.candidates[0].content.parts[0].text.trim();
+      return data.choices[0].message.content.trim();
     } catch (error: any) {
       console.error('AI Service Error:', error);
       return `Sorry, I encountered an error: ${error.message}. Please try again.`;
@@ -123,13 +127,15 @@ export class AIService {
       Never provide investment advice that could be risky.
     `;
 
-    // Format messages for Gemini API
+    // Format messages for OpenRouter API
     const formattedMessages = [
       {
+        role: "system",
+        content: systemPrompt
+      },
+      {
         role: "user",
-        parts: [{
-          text: `${systemPrompt}\n\nUser's financial context:\n${context}\n\nUser's message: ${message}`
-        }]
+        content: `User's financial context:\n${context}\n\nUser's message: ${message}`
       }
     ];
 
